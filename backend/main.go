@@ -2,6 +2,7 @@ package main
 
 import (
 	"time"
+	"uyirsafe/backend/AI"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,8 @@ func main() {
 	r.POST("/login", handler.LoginUser)
 
 	r.POST("/new", handler.NewReport)
+
+	r.POST("/api/ai/detect", AI.DetectHazard)
 
 	r.GET("/user", handler.GetReportsAndPoints)
 
