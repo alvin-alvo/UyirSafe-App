@@ -1,0 +1,148 @@
+.reportContainer {
+    background-color: rgba(255, 255, 255, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    align-items: center;
+    text-align: center;
+    padding: 50px 80px 160px;
+    font: 32px Poppins, sans-serif;
+  }
+  
+  @media (max-width: 991px) {
+    .reportContainer {
+      padding: 0 20px 100px;
+    }
+  }
+  
+  .contentWrapper {
+    display: flex;
+    width: 1088px;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: start;
+  }
+  
+  .reportTitle {
+    color: rgba(0, 0, 0, 1);
+    font-size: 48px;
+    font-weight: 700;
+    align-self: center;
+  }
+  
+  @media (max-width: 991px) {
+    .reportTitle {
+      font-size: 40px;
+    }
+  }
+  
+  .sectionTitle {
+    color: rgba(0, 0, 0, 1);
+    font-weight: 700;
+    margin-top: 89px;
+  }
+  
+  @media (max-width: 991px) {
+    .sectionTitle {
+      margin: 40px 0 0 5px;
+    }
+  }
+  
+  .optionsContainer {
+    align-self: stretch;
+    display: flex;
+    margin-top: 9px;
+    width: 100%;
+    gap: 20px;
+    font-size: 24px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  @media (max-width: 991px) {
+    .optionsContainer {
+      max-width: 100%;
+    }
+  }
+  
+  .selectionBox {
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 1);
+    display: flex;
+    gap: 40px 100px;
+    color: rgba(0, 0, 0, 1);
+    font-weight: 600;
+    flex-wrap: wrap;
+    padding: 20px 39px;
+    border: 3px solid rgba(0, 0, 0, 1);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .selectionBox:hover, .selectionBox:focus {
+    background-color: rgba(114, 136, 199, 0.1);
+    outline: none;
+  }
+  
+  @media (max-width: 991px) {
+    .selectionBox {
+      max-width: 100%;
+      padding: 0 20px;
+    }
+  }
+  
+  .selectionText {
+    margin: auto 0;
+  }
+  
+  .selectionIcon {
+    aspect-ratio: 1;
+    object-fit: contain;
+    object-position: center;
+    width: 52px;
+  }
+  
+  .actionButton {
+    border-radius: 20px;
+    background-color: rgba(114, 136, 199, 1);
+    align-self: start;
+    color: rgba(255, 255, 255, 1);
+    font-weight: 700;
+    padding: 22px 62px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .actionButton:hover, .actionButton:focus {
+    background-color: rgba(94, 116, 179, 1);
+    outline: none;
+  }
+  
+  @media (max-width: 991px) {
+    .actionButton {
+      padding: 0 20px;
+    }
+  }
+  
+  .locationTitle {
+    color: rgba(0, 0, 0, 1);
+    font-weight: 700;
+    margin-top: 85px;
+  }
+  
+  @media (max-width: 991px) {
+    .locationTitle {
+      margin-top: 40px;
+    }
+  }
+  
+  .mapContainer {
+    display: flex;
+    width: 697px;
+    max-width: 100%;
+    height: 330px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
