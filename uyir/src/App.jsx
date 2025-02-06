@@ -2,12 +2,14 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 // import LoginPage from "./pages/LoginPage";
 // import TeacherDashboard from "./pages/TeacherDashboard.jsx";
+
 import { useState, useEffect } from "react";
 import "./App.css";
 import { SignUp } from "./pages/SignUp.jsx";
 import { Login } from "./pages/Login.jsx";
 import { ReportsPage } from "./pages/ReportsPage.jsx";
 import { ReportLayout } from "./pages/NewReport.jsx";
+
 
 const App = () => {
   const [user, setUser] = useState(null);
