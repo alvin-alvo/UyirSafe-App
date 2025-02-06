@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { UserHeader } from "../components/UserHeader";
 import { ReportCard } from "../components/ReportCard";
 import styles from "./ReportsPage.module.css";
+import { Navigate, useNavigate } from "react-router-dom";
 
 export const ReportsPage = () => {
   const [userName, setUserName] = useState("Guest");
   const [reports, setReports] = useState([]);
   const [points, setPoints] = useState(0);
+  const navigate = useNavigate();
 
   // Function to get username from cookies
   const getCookie = (name) => {
@@ -48,6 +50,7 @@ export const ReportsPage = () => {
 
   const handleNewReport = () => {
     console.log("New report button clicked");
+    navigate("/newreport")
   };
 
   return (

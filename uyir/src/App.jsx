@@ -8,13 +8,11 @@ import "./App.css";
 import { SignUp } from "./pages/SignUp.jsx";
 import { Login } from "./pages/Login.jsx";
 import { ReportsPage } from "./pages/ReportsPage.jsx";
-import { ReportLayout } from "./pages/NewReport.jsx";
-
+import { NewReport } from "./pages/NewReport.jsx";
 
 const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
 
   return (
     <Router>
@@ -22,7 +20,7 @@ const App = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
         <Route path="/user" element={<ReportsPage />} />
-        <Route path="/newreport" element={<ReportLayout />} />
+        <Route path="/newreport" element={<NewReport />} />
         {/* <Route
           path="/faculty"
           element={

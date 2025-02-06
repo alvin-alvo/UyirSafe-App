@@ -13,13 +13,14 @@ export const ReportCard = ({
   const statusClassName = `${styles.status} ${
     status === "Fixed" ? styles.statusFixed : styles.statusPending
   }`;
-
+  
   // Format the date to show only "DD-MM-YYYY"
   const formattedDate = new Date(date).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   });
+  console.log("date:",formattedDate)
 
   return (
     <article className={styles.reportCard}>
@@ -42,7 +43,7 @@ export const ReportCard = ({
                   <div>Longitude: {longitude}</div>
                   <div>Latitude: {latitude}</div>
                 </div>
-                <time className={styles.date} dateTime={date}>
+                <time className={styles.date} dateTime={formattedDate}>
                   Date: {formattedDate}
                 </time>
               </div>

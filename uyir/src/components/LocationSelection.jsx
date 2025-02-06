@@ -31,7 +31,7 @@ export default function LocationSelector() {
         role="region"
         aria-label="Map selection area"
       >
-        <LoadScript googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY">
+        <LoadScript googleMapsApiKey="AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw">
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
             center={center}

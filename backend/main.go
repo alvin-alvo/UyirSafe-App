@@ -2,7 +2,7 @@ package main
 
 import (
 	"time"
-	"uyirsafe/backend/AI"
+	"github.com/leoantony72/Uyir/AI"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"

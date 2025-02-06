@@ -1,24 +1,54 @@
-import React, { useState } from "react";
-import styles from '../pages/ReportLayout.module.css';
+import React, { useState, useEffect } from "react";
+import * as tmImage from "@teachablemachine/image";
+import styles from "../pages/ReportLayout.module.css";
 
 const reportTypes = [
-  { id: 'carCrash', label: 'Car Crash', icon: 'https://cdn.builder.io/api/v1/image/assets/TEMP/cf7a81a78ab7096fc12023427c40137317a139ef9c17708e407fbdd06de10a5e?placeholderIfAbsent=true&apiKey=8ebc8889e91f44bf93e5ed89fa3dd955' },
-  { id: 'roadHazard', label: 'Road Hazard', icon: 'http://b.io/ext_2-' },
-  { id: 'trafficJam', label: 'Traffic Jam', icon: 'http://b.io/ext_3-' },
-  { id: 'construction', label: 'Construction', icon: 'http://b.io/ext_4-' }
+  { id: "carCrash", label: "Car Crash" },
+  { id: "roadHazard", label: "Road Hazard" },
+  { id: "trafficJam", label: "Traffic Jam" },
+  { id: "construction", label: "Construction" },
 ];
 
+const MODEL_URL =
+  "https://storage.googleapis.com/tm-model/8N2NXMoJ8/model.json";
+const METADATA_URL =
+  "https://storage.googleapis.com/tm-model/8N2NXMoJ8/metadata.json";
+
 export default function ReportTypeSelection() {
-  const [selectedType, setSelectedType] = useState('');
+  const [selectedType, setSelectedType] = useState("");
+  const [model, setModel] = useState(null);
+  const [labelMap, setLabelMap] = useState([]);
+
+  useEffect(() => {
+    const loadModel = async () => {
+      const model = await tmImage.load(MODEL_URL, METADATA_URL);
+      setModel(model);
+      setLabelMap(model.getClassLabels());
+    };
+    loadModel();
+  }, []);
 
   const handleFileSelect = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async (e) => {
       const file = e.target.files[0];
-      if (file) {
-        console.log('File selected:', file);
+      if (file && model) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.onload = async () => {
+          const prediction = await model.predict(img);
+          console.log("pred", prediction);
+          const bestMatch = prediction.reduce((a, b) =>
+            a.probability > b.probability ? a : b
+          );
+          const matchedType = reportTypes.find(
+            (type) => type.label === bestMatch.className
+          );
+          if (matchedType) setSelectedType(matchedType.id);
+          URL.revokeObjectURL(img.src);
+        };
       }
     };
     input.click();
@@ -41,7 +71,7 @@ export default function ReportTypeSelection() {
             </option>
           ))}
         </select>
-        <button 
+        <button
           className={styles.actionButton}
           onClick={handleFileSelect}
           aria-label="Choose file to upload"

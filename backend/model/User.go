@@ -23,9 +23,9 @@ type Session struct {
 type Report struct {
 	ID        string    `json:"id" gorm:"id"`
 	UserID    string    `json:"uid" gorm:"user_id"`
-	Longitude string    `json:"longitude" gorm:"longitude"`
-	Latitude  string    `json:"latitude" gorm:"latitude"`
-	Place     string    `json:"place" gorm:"place"`
+	Longitude float64   `json:"longitude" gorm:"longitude"`
+	Latitude  float64   `json:"latitude" gorm:"latitude"`
+	Location  string    `json:"location" gorm:"location"`
 	Date      time.Time `json:"date" gorm:"date"`
 	Status    string    `json:"status" gorm:"status"`
 	FilePath  string    `json:"file"`
