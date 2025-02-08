@@ -7,11 +7,14 @@ const libraries = ['places']; // Keep the libraries static
 
 export const AdminDashboard = () => {
   const [updates, setUpdates] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [mapCenter, setMapCenter] = useState({ lat: 11.051362294728685, lng: 76.94148112125961 });
+  const [mapCenter, setMapCenter] = useState(null); // Start with null until location is fetched
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isFetching, setIsFetching] = useState(true); // Track fetch status
+  const [locationLoaded, setLocationLoaded] = useState(false); // Track location status
   const mapRef = useRef(null);
+
+  // Custom blue marker icon for current location
+  const blueMarkerIcon = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
 
   // Fetch reports from API
   const fetchReports = async () => {
@@ -32,9 +35,19 @@ export const AdminDashboard = () => {
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => setMapCenter({ lat: position.coords.latitude, lng: position.coords.longitude }),
-        (error) => console.error('Error retrieving location:', error)
+        (position) => {
+          setMapCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
+          setLocationLoaded(true);
+        },
+        (error) => {
+          console.error('Error retrieving location:', error);
+          setMapCenter({ lat: 11.051362294728685, lng: 76.94148112125961 }); // Default fallback
+          setLocationLoaded(true);
+        }
       );
+    } else {
+      setMapCenter({ lat: 11.051362294728685, lng: 76.94148112125961 }); // Default fallback
+      setLocationLoaded(true);
     }
   }, []);
 
@@ -52,30 +65,35 @@ export const AdminDashboard = () => {
       <div className={styles.contentWrapper}>
         <section className={styles.mapContainer} aria-label="Map">
           <div className={styles.map}>
-            <LoadScript googleMapsApiKey="AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw" libraries={libraries}>
-              <GoogleMap
-                mapContainerStyle={{ width: '100%', height: '100%' }}
-                center={mapCenter}
-                zoom={12}
-                onClick={(event) => setSelectedLocation({ lat: event.latLng.lat(), lng: event.latLng.lng() })}
-                onLoad={async (map) => {
-                  mapRef.current = map;
-                  await fetchReports(); // Wait for fetch to complete
-                  setMapLoaded(true);
-                }}
-              >
-                {/* Show markers only if data is loaded */}
-                {!isFetching && (
-                  <>
-                    <Marker position={mapCenter} title="Admin Location" />
-                    {selectedLocation && <Marker position={selectedLocation} title="Selected Location" />}
-                    {updates.map((update) => (
-                      <Marker key={update.id} position={{ lat: update.latitude, lng: update.longitude }} title={`Report ID: ${update.id}`} />
-                    ))}
-                  </>
-                )}
-              </GoogleMap>
-            </LoadScript>
+            {!locationLoaded ? (
+              <p>Loading map...</p>
+            ) : (
+              <LoadScript googleMapsApiKey="AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw" libraries={libraries}>
+                <GoogleMap
+                  mapContainerStyle={{ width: '100%', height: '100%' }}
+                  center={mapCenter}
+                  zoom={12}
+                  onLoad={async (map) => {
+                    mapRef.current = map;
+                    await fetchReports(); // Wait for fetch to complete
+                    setMapLoaded(true);
+                  }}
+                >
+                  {/* Show markers only if data is loaded */}
+                  {!isFetching && (
+                    <>
+                      {/* Blue marker for current location */}
+                      <Marker position={mapCenter} title="Your Location" icon={blueMarkerIcon} />
+
+                      {/* Default markers for reports */}
+                      {updates.map((update) => (
+                        <Marker key={update.id} position={{ lat: update.latitude, lng: update.longitude }} title={`Report ID: ${update.id}`} />
+                      ))}
+                    </>
+                  )}
+                </GoogleMap>
+              </LoadScript>
+            )}
           </div>
         </section>
         <section className={styles.updatesContainer} aria-label="Updates">
