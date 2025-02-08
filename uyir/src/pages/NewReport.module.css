@@ -1,128 +1,109 @@
-.container {
+.newReportPage {
   background-color: #fff;
+  padding: 50px 80px 30px;
+}
+
+.contentWrapper {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  align-items: flex-start;
+  gap: 20px;
+}
+
+.reportSection {
+  width: 66%;
+}
+
+.pageTitle {
   color: #000;
-  text-align: center;
-  padding: 30px 50px 20px;
-  font: 700 24px Poppins, sans-serif;
-}
-
-@media (max-width: 991px) {
-  .container {
-    padding: 0 15px;
-  }
-}
-
-.title {
-  font-size: 36px;
-  align-self: center;
-}
-
-@media (max-width: 991px) {
-  .title {
-    font-size: 32px;
-  }
+  font: 700 48px Poppins, sans-serif;
+  text-align: right;
+  margin-bottom: 41px;
 }
 
 .sectionTitle {
-  margin-top: 40px;
+  color: #000;
+  font: 700 32px Poppins, sans-serif;
+  margin-bottom: 20px;
 }
 
-@media (max-width: 991px) {
-  .sectionTitle {
-    margin: 30px 0 0 5px;
-  }
+.reportTypeSelector {
+  margin-bottom: 53px;
 }
 
-.typeSelector {
-  border-radius: 15px;
-  background-color: #fff;
-  display: flex;
-  margin-top: 9px;
+.typeSelect {
   width: 100%;
-  max-width: 500px;
-  gap: 15px;
-  font-size: 20px;
-  font-weight: 600;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  padding: 15px 30px;
-  border: 2px solid #000;
+  max-width: 692px;
+  padding: 20px;
+  font: 600 24px Poppins, sans-serif;
+  border: 3px solid #000;
+  border-radius: 20px;
+  background-color: #fff;
+  appearance: none;
+  cursor: pointer;
 }
 
-@media (max-width: 991px) {
-  .typeSelector {
-    padding: 0 15px;
-  }
+.selectedTypeDisplay {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
 }
 
-.typeText {
-  margin: auto 0;
+.selectedTypeText {
+  font: 600 24px Poppins, sans-serif;
+  margin-right: 20px;
 }
 
 .typeIcon {
-  aspect-ratio: 1;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
-  object-position: center;
-  width: 40px;
 }
 
-.actionContainer {
-  align-self: flex-end;
-  display: flex;
-  margin-top: 40px;
+.locationSelector {
+  margin-bottom: 65px;
+}
+
+.mapContainer {
+  height: 330px;
+  background-color: #f0f0f0;
+  margin-bottom: 20px;
+}
+
+.locationInput {
   width: 100%;
-  max-width: 1000px;
-  gap: 15px;
-  font-size: 20px;
-  color: #fff;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  padding: 10px;
+  font: 400 16px Poppins, sans-serif;
+  border: 1px solid #000;
+  border-radius: 5px;
+  margin-bottom: 10px;
 }
 
-@media (max-width: 991px) {
-  .actionContainer {
-    max-width: 100%;
-    margin-top: 30px;
-  }
+.selectedLocation {
+  color: #6a6a6a;
+  font: 700 24px Poppins, sans-serif;
 }
 
-.chooseFileBtn {
-  border-radius: 15px;
+.fileUploader {
+  margin-bottom: 30px;
+}
+
+.fileName {
+  color: #6a6a6a;
+  font: 700 20px Poppins, sans-serif;
+  margin-bottom: 10px;
+}
+
+.chooseFileButton {
+  display: inline-block;
+  border-radius: 20px;
   background-color: #7288c7;
-  padding: 15px 40px;
-  cursor: pointer;
-}
-
-@media (max-width: 991px) {
-  .chooseFileBtn {
-    padding: 0 15px;
-  }
-}
-
-.submitBtn {
-  border-radius: 15px;
-  background-color: #000;
-  white-space: nowrap;
-  padding: 15px 50px;
+  color: #fff;
+  font: 700 24px Poppins, sans-serif;
+  padding: 22px 62px;
   cursor: pointer;
   border: none;
-  font-size: 20px;
-  color: #fff;
-  font-weight: 700;
 }
 
-@media (max-width: 991px) {
-  .submitBtn {
-    white-space: initial;
-    padding: 0 15px;
-  }
-}
-
-.visually-hidden {
+.hiddenFileInput {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -132,4 +113,112 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.submitButton {
+  border-radius: 20px;
+  background-color: #000;
+  color: #fff;
+  font: 700 24px Poppins, sans-serif;
+  padding: 22px 70px;
+  text-align: center;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+}
+
+.similarReportsSection {
+  margin-top: 120px;
+  width: 34%;
+}
+
+.reportCard {
+  border-radius: 10px;
+  border: 2px solid #000;
+  padding: 15px 19px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 36px;
+}
+
+.reportDetails,
+.reportStatus {
+  display: flex;
+  flex-direction: column;
+}
+
+.reportInfo {
+  color: #3f3f3f;
+  font: 700 16px Poppins, sans-serif;
+  margin-bottom: 13px;
+}
+
+.reportDate {
+  color: #747474;
+  font: 700 16px Poppins, sans-serif;
+  margin-bottom: 22px;
+}
+
+.statusBadge {
+  border-radius: 10px;
+  background-color: #f7685b;
+  color: #fff;
+  font: 700 14px Poppins, sans-serif;
+  padding: 33px 22px;
+  text-align: center;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 991px) {
+  .newReportPage {
+    padding: 0 20px;
+  }
+
+  .contentWrapper {
+    flex-direction: column;
+  }
+
+  .reportSection,
+  .similarReportsSection {
+    width: 100%;
+  }
+
+  .pageTitle,
+  .sectionTitle {
+    font-size: 40px;
+  }
+
+  .typeSelect {
+    padding: 15px;
+    font-size: 20px;
+  }
+
+  .chooseFileButton,
+  .submitButton {
+    padding: 22px 20px;
+    width: 100%;
+  }
+
+  .reportCard {
+    flex-direction: column;
+  }
+
+  .reportStatus {
+    margin-top: 20px;
+  }
+
+  .statusBadge {
+    padding: 15px;
+  }
 }

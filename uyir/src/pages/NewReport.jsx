@@ -1,38 +1,62 @@
 import React, { useState, useEffect } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
-import styles from "./NewReport.module.css";
 import * as tf from "@tensorflow/tfjs";
+import styles from "./NewReport.module.css";
 import { useNavigate } from "react-router-dom";
 
+// Static values and dummy data
+const reportTypes = ["Car crash", "Pothole", "Fallen tree", "Flood"];
+const similarReports = [
+  {
+    type: "pothole",
+    location: "Thrissur",
+    longitude: "10.5276° N",
+    latitude: "76.2144° E",
+    date: "11/2/25",
+    status: "Pending",
+  },
+  {
+    type: "pothole",
+    location: "Thrissur",
+    longitude: "10.5246° N",
+    latitude: "76.2154° E",
+    date: "11/2/25",
+    status: "Pending",
+  },
+];
+
+// Google Maps API and Map Settings
+const GOOGLE_MAPS_API_KEY = "AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw";
 const mapContainerStyle = { width: "100%", height: "300px" };
 const center = { lat: 11.051362294728685, lng: 76.94148112125961 };
-const GOOGLE_MAPS_API_KEY = "AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw";
 
-// Use the local model files.
-// Ensure that both model.json and model.weights.bin are in your public folder.
+// TensorFlow model URLs and threshold
 const MODEL_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/model.json";
-// We'll still use the remote metadata file. You can also host it locally if desired.
 const METADATA_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/metadata.json";
+const MIN_CONFIDENCE = 1;
 
 export const NewReport = () => {
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [address, setAddress] = useState("");
-  const [selectedType, setSelectedType] = useState("");
+  // State for ML prediction
   const [model, setModel] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [predictionValid, setPredictionValid] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  // Load the model (from local files) and its metadata
+  // Report form state
+  const [selectedType, setSelectedType] = useState("Car crash");
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  // New states for map location: the coordinates and the reverse‐geocoded address.
+  const [selectedCoordinates, setSelectedCoordinates] = useState(null);
+  const [address, setAddress] = useState("");
+
+  // Load the TensorFlow model and metadata on mount.
   useEffect(() => {
     const loadModelAndMetadata = async () => {
       try {
-        // Load the model from the local JSON file.
         const loadedModel = await tf.loadLayersModel(MODEL_URL);
         setModel(loadedModel);
-        // Load the metadata (which contains the labels)
         const response = await fetch(METADATA_URL);
         const metaDataJson = await response.json();
         setMetadata(metaDataJson);
@@ -44,11 +68,12 @@ export const NewReport = () => {
     loadModelAndMetadata();
   }, []);
 
-  const handleTypeChange = (event) => {
+  // Allow manual selection of report type.
+  const handleTypeSelect = (event) => {
     setSelectedType(event.target.value);
   };
 
-  // Reverse geocoding: get address from latitude/longitude
+  // Reverse geocode coordinates into a human-friendly address.
   const fetchAddress = (lat, lng) => {
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
@@ -60,17 +85,16 @@ export const NewReport = () => {
       }
     });
   };
-  
 
+  // When the map is clicked, update the coordinates and fetch the address.
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
-    setSelectedLocation({ lat, lng });
-    console.log(lat,lng)
+    setSelectedCoordinates({ lat, lng });
     fetchAddress(lat, lng);
   };
 
-  // When the user selects a file, load it and run the prediction
+  // When a file is selected, load it and run the prediction.
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     setSelectedFile(file);
@@ -87,7 +111,7 @@ export const NewReport = () => {
     }
   };
 
-  // Convert the file into an image tensor
+  // Helper: Convert the file into a Tensor.
   const loadImage = (file) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -105,50 +129,46 @@ export const NewReport = () => {
     });
   };
 
-  const MIN_CONFIDENCE = 1; // Adjust this threshold as needed
+  // Preprocess the image and run the prediction.
+  const predictImage = async (imageTensor) => {
+    const resizedImage = tf.image.resizeBilinear(imageTensor, [224, 224]);
+    const normalizedImage = resizedImage.div(255.0);
+    const input = normalizedImage.expandDims(0);
 
-const predictImage = async (imageTensor) => {
-  // Preprocess the image: resize to 224x224 and normalize pixel values
-  const resizedImage = tf.image.resizeBilinear(imageTensor, [224, 224]);
-  const normalizedImage = resizedImage.div(255.0);
-  const input = normalizedImage.expandDims(0);
+    const predictionTensor = model.predict(input);
+    const predictionData = predictionTensor.dataSync();
+    const predictedIndex = predictionData.indexOf(Math.max(...predictionData));
+    const predictedProbability = predictionData[predictedIndex];
 
-  // Run prediction
-  const predictionTensor = model.predict(input);
-  // Convert the tensor to a flat array
-  const predictionData = predictionTensor.dataSync();
-  // Determine the index with the highest probability
-  const predictedIndex = predictionData.indexOf(Math.max(...predictionData));
-  const predictedProbability = predictionData[predictedIndex];
+    if (metadata && metadata.labels && predictedIndex < metadata.labels.length) {
+      if (predictedProbability < MIN_CONFIDENCE) {
+        setPredictionValid(false);
+        setPredictionResult(null);
+        alert("The model is not confident about this image. Please upload a valid image.");
+        return;
+      }
 
-  // Use metadata.labels to get the predicted label.
-  if (metadata && metadata.labels && predictedIndex < metadata.labels.length) {
-    // Check if the prediction is confident enough
-    if (predictedProbability < MIN_CONFIDENCE) {
+      const predictedLabel = metadata.labels[predictedIndex];
+      setSelectedType(predictedLabel);
+      setPredictionValid(true);
+      setPredictionResult({
+        type: predictedLabel,
+        probability: predictedProbability,
+      });
+      console.log(predictedLabel, predictedProbability);
+    } else {
       setPredictionValid(false);
       setPredictionResult(null);
-      alert("The model is not confident about this image. Please upload a valid image.");
-      return;
+      alert("The image could not be identified. Please select a valid image.");
     }
+  };
 
-    const predictedLabel = metadata.labels[predictedIndex];
-    setSelectedType(predictedLabel);
-    setPredictionValid(true);
-    setPredictionResult({
-      type: predictedLabel,
-      probability: predictedProbability,
-    });
-    console.log(predictedLabel,predictedProbability)
-  } else {
-    setPredictionValid(false);
-    setPredictionResult(null);
-    alert("The image could not be identified. Please select a valid image.");
-  }
-};
+  // On form submission, ensure a location (via map) and a file have been selected,
+  // then send the report data to the backend.
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-
-  const handleSubmit = async () => {
-    if (!selectedLocation || !selectedFile) {
+    if (!selectedCoordinates || !selectedFile) {
       console.error("Please select both a location and a file before submitting");
       return;
     }
@@ -159,8 +179,8 @@ const predictImage = async (imageTensor) => {
     }
 
     const formData = new FormData();
-    formData.append("latitude", selectedLocation.lat);
-    formData.append("longitude", selectedLocation.lng);
+    formData.append("latitude", selectedCoordinates.lat);
+    formData.append("longitude", selectedCoordinates.lng);
     formData.append("location", address);
     formData.append("file", selectedFile);
     formData.append("type", selectedType);
@@ -178,77 +198,119 @@ const predictImage = async (imageTensor) => {
 
       const result = await response.json();
       console.log("Report submitted successfully:", result);
-      navigate("/user");
+      // Add any navigation or success messages here.
+      navigate("/user")
     } catch (error) {
       console.error("Error submitting report:", error);
     }
   };
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>New Report</h1>
-      <section>
-        <h2 className={styles.sectionTitle}>Type</h2>
-        <select
-          className="typeSelector"
-          value={selectedType}
-          onChange={handleTypeChange}
-          aria-label="Select report type"
-        >
-          {metadata && metadata.labels ? (
-            metadata.labels.map((label, idx) => (
-              <option key={idx} value={label}>
-                {label}
-              </option>
-            ))
-          ) : (
-            <>
-              <option value="Car crash">Car crash</option>
-              <option value="Theft">Theft</option>
-              <option value="Fire">Fire</option>
-              <option value="Natural disaster">Natural disaster</option>
-              <option value="Other">Other</option>
-            </>
-          )}
-        </select>
-      </section>
-      <section>
-        <h2 className={styles.sectionTitle}>Choose Location</h2>
-        <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={center}
-            zoom={10}
-            onClick={handleMapClick}
-          >
-            {selectedLocation && <Marker position={selectedLocation} />}
-          </GoogleMap>
-        </LoadScript>
-        {address && <p className={styles.address}>📍 {address}</p>}
-      </section>
-      <div className={styles.actionContainer}>
-        <label htmlFor="fileInput" className={styles.chooseFileBtn}>
-          Choose File
-        </label>
-        <input
-          type="file"
-          id="fileInput"
-          className={styles["visually-hidden"]}
-          onChange={handleFileChange}
-          aria-label="Choose file to upload"
-        />
-        {predictionResult && (
-          <div className={styles.predictionResult}>
-            <p>
-              Predicted: <strong>{predictionResult.type}</strong> with{" "}
-              {(predictionResult.probability * 100).toFixed(2)}% confidence.
-            </p>
-          </div>
-        )}
-        <button className={styles.submitBtn} onClick={handleSubmit}>
-          Submit
-        </button>
+    <main className={styles.newReportPage}>
+      <div className={styles.contentWrapper}>
+        <section className={styles.reportSection}>
+          <h1 className={styles.pageTitle}>New Report</h1>
+          <form onSubmit={handleSubmit}>
+            <div className={styles.reportTypeSelector}>
+              <h2 className={styles.sectionTitle}>Type</h2>
+              <label htmlFor="report-type-select" className={styles.visuallyHidden}>
+                Select report type
+              </label>
+              <select
+                id="report-type-select"
+                className={styles.typeSelect}
+                value={selectedType}
+                onChange={handleTypeSelect}
+                aria-describedby="report-type-description"
+              >
+                {metadata && metadata.labels
+                  ? metadata.labels.map((label, idx) => (
+                      <option key={idx} value={label}>
+                        {label}
+                      </option>
+                    ))
+                  : reportTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+              </select>
+              <p id="report-type-description" className={styles.visuallyHidden}>
+                Choose the type of incident you want to report
+              </p>
+              {/* <div className={styles.selectedTypeDisplay} aria-live="polite">
+                <span className={styles.selectedTypeText}>Selected: {selectedType}</span>
+                <img
+                  src={`/icons/${selectedType.toLowerCase().replace(" ", "-")}.svg`}
+                  alt={`${selectedType} icon`}
+                  className={styles.typeIcon}
+                />
+              </div> */}
+            </div>
+            <div className={styles.locationSelector}>
+              <h2 className={styles.sectionTitle}>Choose Location</h2>
+              {/* Implement the fully functional Google Map */}
+              <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={center}
+                  zoom={10}
+                  onClick={handleMapClick}
+                >
+                  {selectedCoordinates && <Marker position={selectedCoordinates} />}
+                </GoogleMap>
+              </LoadScript>
+              {/* Display the reverse-geocoded address */}
+              <p id="location-description" className={styles.selectedLocation}>
+                📍 {address || "No location selected"}
+              </p>
+            </div>
+            <div className={styles.fileUploader}>
+              <p className={styles.fileName}>
+                {selectedFile ? `File: ${selectedFile.name}` : "No file selected"}
+              </p>
+              <label htmlFor="file-input" className={styles.chooseFileButton}>
+                Choose File
+              </label>
+              <input
+                type="file"
+                id="file-input"
+                className={styles.hiddenFileInput}
+                onChange={handleFileChange}
+                aria-label="Choose file to upload"
+              />
+              {predictionResult && (
+                <p className={styles.predictionResult}>
+                  Predicted: <strong>{predictionResult.type}</strong> with{" "}
+                  {(predictionResult.probability * 100).toFixed(2)}% confidence.
+                </p>
+              )}
+            </div>
+            <button type="submit" className={styles.submitButton}>
+              Submit
+            </button>
+          </form>
+        </section>
+        {/* <aside className={styles.similarReportsSection}>
+          <h2 className={styles.sectionTitle}>Similar Reports</h2>
+          {similarReports.map((report, index) => (
+            <div key={index} className={styles.reportCard}>
+              <div className={styles.reportDetails}>
+                <p className={styles.reportInfo}>Type: {report.type}</p>
+                <p className={styles.reportInfo}>Location: {report.location}</p>
+                <p className={styles.reportInfo}>Longitude: {report.longitude}</p>
+                <p className={styles.reportInfo}>Latitude: {report.latitude}</p>
+              </div>
+              <div className={styles.reportStatus}>
+                <p className={styles.reportDate}>Date: {report.date}</p>
+                <div className={styles.statusBadge}>{report.status}</div>
+              </div>
+            </div>
+          ))}
+        </aside> */}
       </div>
-    </div>
+    </main>
   );
 };
+
+// export default NewReportPage;
