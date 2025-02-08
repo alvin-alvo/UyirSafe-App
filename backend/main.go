@@ -2,6 +2,7 @@ package main
 
 import (
 	"time"
+
 	"github.com/leoantony72/Uyir/AI"
 
 	"github.com/gin-contrib/cors"
@@ -32,6 +33,11 @@ func main() {
 	r.POST("/api/ai/detect", AI.DetectHazard)
 
 	r.GET("/user", handler.GetReportsAndPoints)
+
+	r.GET("/reports", handler.GetAllReports)
+	r.GET("/reports/pending/", handler.GetPendingReports)
+
+	r.POST("/reports/updateStatus", handler.UpdateReportStatus)
 
 	r.Run(":6969")
 }

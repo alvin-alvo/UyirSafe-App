@@ -1,116 +1,155 @@
 import React, { useState, useEffect } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import styles from "./NewReport.module.css";
-import * as tf from "@tensorflow/tfjs"; // Import TensorFlow.js
+import * as tf from "@tensorflow/tfjs";
 import { useNavigate } from "react-router-dom";
 
 const mapContainerStyle = { width: "100%", height: "300px" };
-const center = { lat: 0, lng: 0 };
-const GOOGLE_MAPS_API_KEY = "AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw"; // Replace with actual API key
-const reportTypes = ["Car crash", "Theft", "Fire", "Natural disaster", "Other"];
+const center = { lat: 11.051362294728685, lng: 76.94148112125961 };
+const GOOGLE_MAPS_API_KEY = "AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw";
+
+// Use the local model files.
+// Ensure that both model.json and model.weights.bin are in your public folder.
+const MODEL_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/model.json";
+// We'll still use the remote metadata file. You can also host it locally if desired.
+const METADATA_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/metadata.json";
 
 export const NewReport = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [address, setAddress] = useState("");
-  const [selectedType, setSelectedType] = useState("Car crash");
+  const [selectedType, setSelectedType] = useState("");
   const [model, setModel] = useState(null);
+  const [metadata, setMetadata] = useState(null);
   const [predictionValid, setPredictionValid] = useState(false);
+  const [predictionResult, setPredictionResult] = useState(null);
   const navigate = useNavigate();
 
+  // Load the model (from local files) and its metadata
   useEffect(() => {
-    // Load the TensorFlow model when the component mounts
-    const loadModel = async () => {
-      const loadedModel = await tf.loadLayersModel(
-        "https://storage.googleapis.com/tm-model/8N2NXMoJ8/model.json"
-      ); // Replace with actual model path
-      setModel(loadedModel);
+    const loadModelAndMetadata = async () => {
+      try {
+        // Load the model from the local JSON file.
+        const loadedModel = await tf.loadLayersModel(MODEL_URL);
+        setModel(loadedModel);
+        // Load the metadata (which contains the labels)
+        const response = await fetch(METADATA_URL);
+        const metaDataJson = await response.json();
+        setMetadata(metaDataJson);
+      } catch (error) {
+        console.error("Error loading model or metadata:", error);
+      }
     };
 
-    loadModel();
+    loadModelAndMetadata();
   }, []);
 
   const handleTypeChange = (event) => {
     setSelectedType(event.target.value);
   };
 
-  // Reverse Geocode: Get Address from Lat/Lng
-  const fetchAddress = async (lat, lng) => {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`;
-
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.status === "OK" && data.results.length > 0) {
-        setAddress(data.results[0].formatted_address);
+  // Reverse geocoding: get address from latitude/longitude
+  const fetchAddress = (lat, lng) => {
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        setAddress(results[0].formatted_address);
       } else {
+        console.error("Geocoder failed due to: " + status);
         setAddress("Unknown location");
       }
-    } catch (error) {
-      console.error("Error fetching address:", error);
-      setAddress("Address fetch failed");
-    }
+    });
   };
+  
 
   const handleMapClick = (event) => {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
     setSelectedLocation({ lat, lng });
-    fetchAddress(lat, lng); // Get address when location is selected
+    console.log(lat,lng)
+    fetchAddress(lat, lng);
   };
 
+  // When the user selects a file, load it and run the prediction
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     setSelectedFile(file);
     setPredictionValid(false);
+    setPredictionResult(null);
 
-    // If model is loaded, classify the file
-    if (file && model) {
-      const image = await loadImage(file);
-      const prediction = await predictImage(image);
-      console.log("Prediction result:", prediction);
+    if (file && model && metadata) {
+      try {
+        const imageTensor = await loadImage(file);
+        await predictImage(imageTensor);
+      } catch (error) {
+        console.error("Error during prediction:", error);
+      }
     }
   };
 
+  // Convert the file into an image tensor
   const loadImage = (file) => {
-    // Create a tensor from the image file (assuming it's an image file)
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.src = URL.createObjectURL(file);
+      const url = URL.createObjectURL(file);
+      img.src = url;
       img.onload = () => {
         const tensor = tf.browser.fromPixels(img);
+        URL.revokeObjectURL(url);
         resolve(tensor);
       };
-      img.onerror = reject;
+      img.onerror = (error) => {
+        URL.revokeObjectURL(url);
+        reject(error);
+      };
     });
   };
 
-  const predictImage = async (imageTensor) => {
-    // Preprocess the image if necessary (resize, normalize, etc.)
-    const resizedImage = tf.image.resizeBilinear(imageTensor, [224, 224]);
-    const normalizedImage = resizedImage.div(255.0); // Normalize the image (if required by the model)
+  const MIN_CONFIDENCE = 1; // Adjust this threshold as needed
 
-    // Make prediction using the model
-    const input = normalizedImage.expandDims(0); // Expand dims to match input shape
-    const prediction = await model.predict(input);
+const predictImage = async (imageTensor) => {
+  // Preprocess the image: resize to 224x224 and normalize pixel values
+  const resizedImage = tf.image.resizeBilinear(imageTensor, [224, 224]);
+  const normalizedImage = resizedImage.div(255.0);
+  const input = normalizedImage.expandDims(0);
 
-    // Process the prediction and set the report type (or any other logic)
-    const predictedClass = prediction.argMax(1).dataSync()[0]; // Get the predicted class
-    if (predictedClass >= 0 && predictedClass < reportTypes.length) {
-      setSelectedType(reportTypes[predictedClass]);
-      setPredictionValid(true);
-    } else {
+  // Run prediction
+  const predictionTensor = model.predict(input);
+  // Convert the tensor to a flat array
+  const predictionData = predictionTensor.dataSync();
+  // Determine the index with the highest probability
+  const predictedIndex = predictionData.indexOf(Math.max(...predictionData));
+  const predictedProbability = predictionData[predictedIndex];
+
+  // Use metadata.labels to get the predicted label.
+  if (metadata && metadata.labels && predictedIndex < metadata.labels.length) {
+    // Check if the prediction is confident enough
+    if (predictedProbability < MIN_CONFIDENCE) {
       setPredictionValid(false);
+      setPredictionResult(null);
+      alert("The model is not confident about this image. Please upload a valid image.");
+      return;
     }
-    return prediction;
-  };
+
+    const predictedLabel = metadata.labels[predictedIndex];
+    setSelectedType(predictedLabel);
+    setPredictionValid(true);
+    setPredictionResult({
+      type: predictedLabel,
+      probability: predictedProbability,
+    });
+    console.log(predictedLabel,predictedProbability)
+  } else {
+    setPredictionValid(false);
+    setPredictionResult(null);
+    alert("The image could not be identified. Please select a valid image.");
+  }
+};
+
 
   const handleSubmit = async () => {
     if (!selectedLocation || !selectedFile) {
-      console.error(
-        "Please select both a location and a file before submitting"
-      );
+      console.error("Please select both a location and a file before submitting");
       return;
     }
 
@@ -122,7 +161,7 @@ export const NewReport = () => {
     const formData = new FormData();
     formData.append("latitude", selectedLocation.lat);
     formData.append("longitude", selectedLocation.lng);
-    formData.append("location", address); // Include the address
+    formData.append("location", address);
     formData.append("file", selectedFile);
     formData.append("type", selectedType);
 
@@ -130,7 +169,7 @@ export const NewReport = () => {
       const response = await fetch("http://localhost:6969/new", {
         method: "POST",
         body: formData,
-        credentials: "include", // Ensures cookies or credentials are sent if needed
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -149,18 +188,28 @@ export const NewReport = () => {
     <div className={styles.container}>
       <h1 className={styles.title}>New Report</h1>
       <section>
-        <h2 className="sectionTitle">Type</h2>
+        <h2 className={styles.sectionTitle}>Type</h2>
         <select
           className="typeSelector"
           value={selectedType}
           onChange={handleTypeChange}
           aria-label="Select report type"
         >
-          {reportTypes.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
+          {metadata && metadata.labels ? (
+            metadata.labels.map((label, idx) => (
+              <option key={idx} value={label}>
+                {label}
+              </option>
+            ))
+          ) : (
+            <>
+              <option value="Car crash">Car crash</option>
+              <option value="Theft">Theft</option>
+              <option value="Fire">Fire</option>
+              <option value="Natural disaster">Natural disaster</option>
+              <option value="Other">Other</option>
+            </>
+          )}
         </select>
       </section>
       <section>
@@ -188,6 +237,14 @@ export const NewReport = () => {
           onChange={handleFileChange}
           aria-label="Choose file to upload"
         />
+        {predictionResult && (
+          <div className={styles.predictionResult}>
+            <p>
+              Predicted: <strong>{predictionResult.type}</strong> with{" "}
+              {(predictionResult.probability * 100).toFixed(2)}% confidence.
+            </p>
+          </div>
+        )}
         <button className={styles.submitBtn} onClick={handleSubmit}>
           Submit
         </button>

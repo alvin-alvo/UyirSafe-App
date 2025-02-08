@@ -11,7 +11,7 @@ export const ReportCard = ({
   imageUrl,
 }) => {
   const statusClassName = `${styles.status} ${
-    status === "Fixed" ? styles.statusFixed : styles.statusPending
+    status === "Resolved" ? styles.statusFixed : styles.statusPending
   }`;
   
   // Format the date to show only "DD-MM-YYYY"
