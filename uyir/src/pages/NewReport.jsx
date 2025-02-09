@@ -4,26 +4,8 @@ import * as tf from "@tensorflow/tfjs";
 import styles from "./NewReport.module.css";
 import { useNavigate } from "react-router-dom";
 
-// Static values and dummy data
+// Static values for report types
 const reportTypes = ["Car crash", "Pothole", "Fallen tree", "Flood"];
-const similarReports = [
-  {
-    type: "pothole",
-    location: "Thrissur",
-    longitude: "10.5276° N",
-    latitude: "76.2144° E",
-    date: "11/2/25",
-    status: "Pending",
-  },
-  {
-    type: "pothole",
-    location: "Thrissur",
-    longitude: "10.5246° N",
-    latitude: "76.2154° E",
-    date: "11/2/25",
-    status: "Pending",
-  },
-];
 
 // Google Maps API and Map Settings
 const GOOGLE_MAPS_API_KEY = "AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw";
@@ -41,15 +23,18 @@ export const NewReport = () => {
   const [metadata, setMetadata] = useState(null);
   const [predictionValid, setPredictionValid] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   // Report form state
   const [selectedType, setSelectedType] = useState("Car crash");
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // New states for map location: the coordinates and the reverse‐geocoded address.
+  // Map location state: coordinates and the reverse-geocoded address.
   const [selectedCoordinates, setSelectedCoordinates] = useState(null);
   const [address, setAddress] = useState("");
+
+  // State for similar reports fetched from the backend.
+  const [similarReports, setSimilarReports] = useState([]);
 
   // Load the TensorFlow model and metadata on mount.
   useEffect(() => {
@@ -67,6 +52,42 @@ export const NewReport = () => {
 
     loadModelAndMetadata();
   }, []);
+
+  // Fetch similar reports when the user selects a new location.
+  useEffect(() => {
+    if (selectedCoordinates) {
+      const fetchSimilarReports = async () => {
+        try {
+          const url = `http://localhost:6969/similarReports`;
+          const requestBody = {
+            latitude: selectedCoordinates.lat,
+            longitude: selectedCoordinates.lng,
+          };
+
+          const response = await fetch(url, {
+            method: "POST", // Using POST to send the body data
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(requestBody),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error: ${response.statusText}`);
+          }
+          const data = await response.json();
+          // Assume the response returns an object with a "similar_reports" key.
+          setSimilarReports(data.similar_reports || []);
+        } catch (error) {
+          console.error("Error fetching similar reports:", error);
+          setSimilarReports([]);
+        }
+      };
+
+      fetchSimilarReports();
+    }
+  }, [selectedCoordinates]);
 
   // Allow manual selection of report type.
   const handleTypeSelect = (event) => {
@@ -163,8 +184,7 @@ export const NewReport = () => {
     }
   };
 
-  // On form submission, ensure a location (via map) and a file have been selected,
-  // then send the report data to the backend.
+  // On form submission, ensure a location and a file are selected, then send the report data to the backend.
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -198,8 +218,7 @@ export const NewReport = () => {
 
       const result = await response.json();
       console.log("Report submitted successfully:", result);
-      // Add any navigation or success messages here.
-      navigate("/user")
+      navigate("/user");
     } catch (error) {
       console.error("Error submitting report:", error);
     }
@@ -238,18 +257,9 @@ export const NewReport = () => {
               <p id="report-type-description" className={styles.visuallyHidden}>
                 Choose the type of incident you want to report
               </p>
-              {/* <div className={styles.selectedTypeDisplay} aria-live="polite">
-                <span className={styles.selectedTypeText}>Selected: {selectedType}</span>
-                <img
-                  src={`/icons/${selectedType.toLowerCase().replace(" ", "-")}.svg`}
-                  alt={`${selectedType} icon`}
-                  className={styles.typeIcon}
-                />
-              </div> */}
             </div>
             <div className={styles.locationSelector}>
               <h2 className={styles.sectionTitle}>Choose Location</h2>
-              {/* Implement the fully functional Google Map */}
               <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
                 <GoogleMap
                   mapContainerStyle={mapContainerStyle}
@@ -260,7 +270,6 @@ export const NewReport = () => {
                   {selectedCoordinates && <Marker position={selectedCoordinates} />}
                 </GoogleMap>
               </LoadScript>
-              {/* Display the reverse-geocoded address */}
               <p id="location-description" className={styles.selectedLocation}>
                 📍 {address || "No location selected"}
               </p>
@@ -291,26 +300,28 @@ export const NewReport = () => {
             </button>
           </form>
         </section>
-        {/* <aside className={styles.similarReportsSection}>
+        <aside className={styles.similarReportsSection}>
           <h2 className={styles.sectionTitle}>Similar Reports</h2>
-          {similarReports.map((report, index) => (
-            <div key={index} className={styles.reportCard}>
-              <div className={styles.reportDetails}>
-                <p className={styles.reportInfo}>Type: {report.type}</p>
-                <p className={styles.reportInfo}>Location: {report.location}</p>
-                <p className={styles.reportInfo}>Longitude: {report.longitude}</p>
-                <p className={styles.reportInfo}>Latitude: {report.latitude}</p>
+          {similarReports.length > 0 ? (
+            similarReports.map((report, index) => (
+              <div key={index} className={styles.reportCard}>
+                <div className={styles.reportDetails}>
+                  <p className={styles.reportInfo}>Type: {report.type}</p>
+                  <p className={styles.reportInfo}>Location: {report.location}</p>
+                  <p className={styles.reportInfo}>Longitude: {report.longitude}</p>
+                  <p className={styles.reportInfo}>Latitude: {report.latitude}</p>
+                </div>
+                <div className={styles.reportStatus}>
+                  <p className={styles.reportDate}>Date: {report.date}</p>
+                  <div className={styles.statusBadge}>{report.status}</div>
+                </div>
               </div>
-              <div className={styles.reportStatus}>
-                <p className={styles.reportDate}>Date: {report.date}</p>
-                <div className={styles.statusBadge}>{report.status}</div>
-              </div>
-            </div>
-          ))}
-        </aside> */}
+            ))
+          ) : (
+            <p>No similar reports found</p>
+          )}
+        </aside>
       </div>
     </main>
   );
 };
-
-// export default NewReportPage;

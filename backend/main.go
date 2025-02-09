@@ -39,5 +39,7 @@ func main() {
 
 	r.POST("/reports/updateStatus", handler.UpdateReportStatus)
 
+	r.POST("/similarReports",handler.SimilarReports)
+
 	r.Run(":6969")
 }
