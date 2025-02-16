@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 const reportTypes = ["Car crash", "Pothole", "Fallen tree", "Flood"];
 
 // Google Maps API and Map Settings
-const GOOGLE_MAPS_API_KEY = "AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw";
 const mapContainerStyle = { width: "100%", height: "300px" };
 const center = { lat: 11.051362294728685, lng: 76.94148112125961 };
 
@@ -260,7 +259,7 @@ export const NewReport = () => {
             </div>
             <div className={styles.locationSelector}>
               <h2 className={styles.sectionTitle}>Choose Location</h2>
-              <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
+              <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
                 <GoogleMap
                   mapContainerStyle={mapContainerStyle}
                   center={center}

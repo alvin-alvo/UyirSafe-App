@@ -68,7 +68,7 @@ export const AdminDashboard = () => {
             {!locationLoaded ? (
               <p>Loading map...</p>
             ) : (
-              <LoadScript googleMapsApiKey="AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw" libraries={libraries}>
+              <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY} libraries={libraries}>
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '100%' }}
                   center={mapCenter}

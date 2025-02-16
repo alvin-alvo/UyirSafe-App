@@ -31,7 +31,7 @@ export default function LocationSelector() {
         role="region"
         aria-label="Map selection area"
       >
-        <LoadScript googleMapsApiKey="AIzaSyCTQl0eGQzZUJmKy6olu00tiNKEwla2Ggw">
+        <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
             center={center}
