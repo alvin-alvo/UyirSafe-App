@@ -5,6 +5,8 @@ import UpdateCard from './UpdateCard';
 
 const libraries = ['places']; // Keep the libraries static
 
+const key = import.meta.env.VITE_Google;
+
 export const AdminDashboard = () => {
   const [updates, setUpdates] = useState([]);
   const [mapCenter, setMapCenter] = useState(null); // Start with null until location is fetched
@@ -68,7 +70,7 @@ export const AdminDashboard = () => {
             {!locationLoaded ? (
               <p>Loading map...</p>
             ) : (
-              <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY} libraries={libraries}>
+              <LoadScript googleMapsApiKey={key} libraries={libraries}>
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '100%' }}
                   center={mapCenter}
