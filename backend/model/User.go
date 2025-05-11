@@ -31,6 +31,7 @@ type Report struct {
 	Status    string    `json:"status" gorm:"status"`
 	FilePath  string    `json:"file"`
 	Type      string    `json:"type"`
+	Level     string    `json:"level"`
 }
 
 func Migrate(db *gorm.DB) {

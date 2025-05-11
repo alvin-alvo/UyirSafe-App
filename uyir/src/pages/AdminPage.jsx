@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
-import styles from './AdminPage.module.css';
-import UpdateCard from './UpdateCard';
+import React, { useState, useEffect, useRef } from "react";
+import { GoogleMap, Marker } from "@react-google-maps/api";
+import styles from "./AdminPage.module.css";
+import UpdateCard from "./UpdateCard";
 
-const libraries = ['places']; // Keep the libraries static
-
-const key = import.meta.env.VITE_Google;
+const libraries = ["places"]; // Keep the libraries static
 
 export const AdminDashboard = () => {
   const [updates, setUpdates] = useState([]);
@@ -42,7 +40,7 @@ export const AdminDashboard = () => {
           setLocationLoaded(true);
         },
         (error) => {
-          console.error('Error retrieving location:', error);
+          console.error("Error retrieving location:", error);
           setMapCenter({ lat: 11.051362294728685, lng: 76.94148112125961 }); // Default fallback
           setLocationLoaded(true);
         }
@@ -70,31 +68,33 @@ export const AdminDashboard = () => {
             {!locationLoaded ? (
               <p>Loading map...</p>
             ) : (
-              <LoadScript googleMapsApiKey={key} libraries={libraries}>
-                <GoogleMap
-                  mapContainerStyle={{ width: '100%', height: '100%' }}
-                  center={mapCenter}
-                  zoom={12}
-                  onLoad={async (map) => {
-                    mapRef.current = map;
-                    await fetchReports(); // Wait for fetch to complete
-                    setMapLoaded(true);
-                  }}
-                >
-                  {/* Show markers only if data is loaded */}
-                  {!isFetching && (
-                    <>
-                      {/* Blue marker for current location */}
-                      <Marker position={mapCenter} title="Your Location" icon={blueMarkerIcon} />
+              <GoogleMap
+                mapContainerStyle={{ width: "100%", height: "100%" }}
+                center={mapCenter}
+                zoom={12}
+                onLoad={async (map) => {
+                  mapRef.current = map;
+                  await fetchReports(); // Wait for fetch to complete
+                  setMapLoaded(true);
+                }}
+              >
+                {/* Show markers only if data is loaded */}
+                {!isFetching && (
+                  <>
+                    {/* Blue marker for current location */}
+                    <Marker position={mapCenter} title="Your Location" icon={blueMarkerIcon} />
 
-                      {/* Default markers for reports */}
-                      {updates.map((update) => (
-                        <Marker key={update.id} position={{ lat: update.latitude, lng: update.longitude }} title={`Report ID: ${update.id}`} />
-                      ))}
-                    </>
-                  )}
-                </GoogleMap>
-              </LoadScript>
+                    {/* Default markers for reports */}
+                    {updates.map((update) => (
+                      <Marker
+                        key={update.id}
+                        position={{ lat: update.latitude, lng: update.longitude }}
+                        title={`Report ID: ${update.id}`}
+                      />
+                    ))}
+                  </>
+                )}
+              </GoogleMap>
             )}
           </div>
         </section>

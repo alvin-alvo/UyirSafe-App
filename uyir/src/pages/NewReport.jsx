@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker } from "@react-google-maps/api";
 import * as tf from "@tensorflow/tfjs";
 import styles from "./NewReport.module.css";
 import { useNavigate } from "react-router-dom";
@@ -7,17 +7,13 @@ import { useNavigate } from "react-router-dom";
 // Static values for report types
 const reportTypes = ["Car crash", "Pothole", "Fallen tree", "Flood"];
 
-
-const key = import.meta.env.VITE_Google;
-console.log("key:",key)
-
 // Google Maps API and Map Settings
 const mapContainerStyle = { width: "100%", height: "300px" };
-const center = { lat: 11.051362294728685, lng: 76.94148112125961 };
+const defaultCenter = { lat: 11.051362294728685, lng: 76.94148112125961 }; // Default center if geolocation fails
 
 // TensorFlow model URLs and threshold
 const MODEL_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/model.json";
-const METADATA_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/metadata.json";
+const METADATA_URL = "https://storage.googleapis.com/tm-model/wpaa0No-z/metadata.json";
 const MIN_CONFIDENCE = 1;
 
 export const NewReport = () => {
@@ -35,6 +31,7 @@ export const NewReport = () => {
   // Map location state: coordinates and the reverse-geocoded address.
   const [selectedCoordinates, setSelectedCoordinates] = useState(null);
   const [address, setAddress] = useState("");
+  const [mapCenter, setMapCenter] = useState(defaultCenter); // Center of the map
 
   // State for similar reports fetched from the backend.
   const [similarReports, setSimilarReports] = useState([]);
@@ -54,6 +51,25 @@ export const NewReport = () => {
     };
 
     loadModelAndMetadata();
+  }, []);
+
+  // Fetch user's current location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setMapCenter({ lat: latitude, lng: longitude }); // Set map center to user's location
+        },
+        (error) => {
+          console.error("Error retrieving location:", error);
+          setMapCenter(defaultCenter); // Fallback to default center
+        }
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+      setMapCenter(defaultCenter); // Fallback to default center
+    }
   }, []);
 
   // Fetch similar reports when the user selects a new location.
@@ -263,16 +279,14 @@ export const NewReport = () => {
             </div>
             <div className={styles.locationSelector}>
               <h2 className={styles.sectionTitle}>Choose Location</h2>
-              <LoadScript googleMapsApiKey={key}>
-                <GoogleMap
-                  mapContainerStyle={mapContainerStyle}
-                  center={center}
-                  zoom={10}
-                  onClick={handleMapClick}
-                >
-                  {selectedCoordinates && <Marker position={selectedCoordinates} />}
-                </GoogleMap>
-              </LoadScript>
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={mapCenter} // Use the user's current location as the center
+                zoom={10}
+                onClick={handleMapClick}
+              >
+                {selectedCoordinates && <Marker position={selectedCoordinates} />}
+              </GoogleMap>
               <p id="location-description" className={styles.selectedLocation}>
                 📍 {address || "No location selected"}
               </p>

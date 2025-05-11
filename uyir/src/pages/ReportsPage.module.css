@@ -1,5 +1,5 @@
 .container {
-  background-color: #fff;
+  /* background-color: #fff; */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -27,4 +27,37 @@
   .container {
     padding: 20px 15px;
   }
+}
+
+.filterContainer {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.filterLabel {
+  font-size: 30px;
+  font-weight: bold;
+  margin-right: 10px;
+  color: #333; /* Dark gray for better readability */
+}
+
+.filterDropdown {
+  padding: 8px 12px;
+  font-size: 16px;
+  border: 1px solid #ccc; /* Light gray border */
+  border-radius: 5px;
+  background-color: #f9f9f9; /* Light background */
+  color: #333; /* Text color */
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filterDropdown:hover {
+  border-color: #888; /* Darker border on hover */
+}
+
+.filterDropdown:focus {
+  border-color: #555; /* Even darker border on focus */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Subtle shadow on focus */
 }
