@@ -4,38 +4,32 @@ import styles from "./FormInput.module.css";
 export const FormInput = ({
   label,
   type,
-  icon,
   id,
+  name,
   value,
   onChange,
-  required = true, // Default is required
+  required = true,
   autoComplete,
 }) => {
   return (
-    <div className={styles.inputWrapper}>
-      <label htmlFor={id} className={styles.inputLabel}>
-        {icon && (
-          <img
-            loading="lazy"
-            src={icon}
-            className={styles.icon}
-            alt=""
-            aria-hidden="true"
-          />
-        )}
-        <span>{label}</span>
+    <div className="space-y-1">
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-[var(--text-color)]"
+      >
+        {label}
       </label>
       <input
         type={type}
         id={id}
-        name={id}
-        className={styles.input}
-        placeholder={label}
-        aria-label={label}
+        name={name}
         value={value}
         onChange={onChange}
-        required={required} // Dynamically set required
+        required={required}
         autoComplete={autoComplete}
+        placeholder={label}
+        className="input-field"
+        aria-required={required}
       />
     </div>
   );

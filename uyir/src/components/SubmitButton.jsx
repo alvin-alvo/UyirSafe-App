@@ -1,24 +1,15 @@
 import React from 'react';
 import styles from './SubmitButton.module.css';
 
-export const SubmitButton = ({ text, backgroundImage, isLoading }) => {
+export const SubmitButton = ({ text, isLoading }) => {
   return (
-    <button 
-      type="submit" 
-      className={styles.submitButton}
+    <button
+      type="submit"
+      className="btn-primary"
       disabled={isLoading}
       aria-busy={isLoading}
     >
-      <img
-        loading="lazy"
-        src={backgroundImage}
-        className={styles.buttonBackground}
-        alt=""
-        aria-hidden="true"
-      />
-      <span className={styles.buttonText}>
-        {isLoading ? 'Processing...' : text}
-      </span>
+      {isLoading ? "Loading..." : text}
     </button>
   );
 };
