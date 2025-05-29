@@ -18,6 +18,9 @@ const App = () => {
     <LoadScript googleMapsApiKey={key}>
       <Router>
         <Routes>
+
+          <Route path="/" element={<Login />} /> //b added this
+
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/user" element={<ReportsPage />} />
