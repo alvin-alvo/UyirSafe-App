@@ -17,7 +17,8 @@ const SignUp = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [passwordError, setPasswordError] = useState(""); // New state for password mismatch
+  const [borderErrorFields, setBorderErrorFields] = useState({});
+  const [passwordError, setPasswordError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
@@ -27,6 +28,11 @@ const SignUp = () => {
       ...prev,
       [name]: value,
     }));
+
+    // Clear border error when user starts typing
+    if (borderErrorFields[name]) {
+      setBorderErrorFields((prev) => ({ ...prev, [name]: false }));
+    }
 
     // Validate passwords on change
     if (name === "password" || name === "confirmPassword") {
@@ -40,55 +46,91 @@ const SignUp = () => {
     }
   };
 
+  const validateForm = () => {
+    const errors = {};
+    const fields = [
+      "firstName",
+      "lastName",
+      "email",
+      "username",
+      "password",
+      "confirmPassword",
+      "vehicleType",
+      "fuelType",
+      "vehicleNumber",
+    ];
+
+    fields.forEach((field) => {
+      if (!formData[field].trim()) {
+        errors[field] = true;
+      }
+    });
+
+    return errors;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
+    setBorderErrorFields({});
 
-    // Final password validation before submission
-    if (formData.password !== formData.confirmPassword) {
-      setPasswordError("Passwords do not match");
+    // Check for empty fields
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setErrorMessage("Please fill in all required fields");
+      setBorderErrorFields(errors);
       setIsLoading(false);
       return;
     }
-    
-    //here
-    console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
 
-    const payload = {
-    email: formData.email,
-    username: formData.username,
-    password: formData.password,
-  };
-
-  console.log("Payload being sent to backend:", payload)
-
-
-    try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/signup`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-       if (!response.ok) {
-      let errorMessage = "Failed to sign up";
-      try {
-        const result = await response.json();
-        errorMessage = result.error || errorMessage;
-      } catch (jsonError) {
-        // If JSON parsing fails, use the status text or a default message
-        errorMessage = response.statusText || errorMessage;
-      }
-      throw new Error(errorMessage);
+    // Final password validation
+    if (formData.password !== formData.confirmPassword) {
+      setPasswordError("Passwords do not match");
+      setBorderErrorFields({ password: true, confirmPassword: true });
+      setIsLoading(false);
+      return;
     }
 
-      setSuccessMessage("Sign-up successful!");
-      console.log("Sign-up successful");
-      setTimeout(() => navigate("/login"), 1000);
+    const payload = {
+      email: formData.email,
+      username: formData.username,
+      password: formData.password,
+    };
+
+    console.log("Payload being sent to backend:", payload);
+
+    try {
+      const response = await fetch("http://localhost:6969/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        setSuccessMessage("Sign-up successful!");
+        console.log("Response:", result);
+        setTimeout(() => navigate("/login"), 1000);
+      } else {
+        // Map backend errors to user-friendly messages
+        let errorMsg = "Failed to sign up";
+        if (result.error) {
+          if (result.error.includes("duplicate key value") && result.error.includes("uni_users_name")) {
+            errorMsg = "This username is already taken";
+            setBorderErrorFields((prev) => ({ ...prev, username: true }));
+          } else if (result.error.includes("duplicate key value") && result.error.includes("email")) {
+            errorMsg = "This email is already registered";
+            setBorderErrorFields((prev) => ({ ...prev, email: true }));
+          } else {
+            errorMsg = result.error;
+          }
+        }
+        throw new Error(errorMsg);
+      }
     } catch (error) {
       console.error("Submission error:", error);
       setErrorMessage(error.message);
@@ -134,6 +176,7 @@ const SignUp = () => {
                 onChange={handleChange}
                 autoComplete="given-name"
                 required
+                className={borderErrorFields.firstName ? "!border-red-500 border-2" : ""}
               />
             </div>
             <div className="flex-1">
@@ -146,6 +189,7 @@ const SignUp = () => {
                 onChange={handleChange}
                 autoComplete="family-name"
                 required
+                className={borderErrorFields.lastName ? "!border-red-500 border-2" : ""}
               />
             </div>
           </div>
@@ -159,7 +203,9 @@ const SignUp = () => {
             onChange={handleChange}
             autoComplete="email"
             required
+            className={borderErrorFields.email ? "!border-red-500 border-2" : ""}
           />
+
           <FormInput
             label="Username"
             type="text"
@@ -169,11 +215,12 @@ const SignUp = () => {
             onChange={handleChange}
             autoComplete="username"
             required
+            className={borderErrorFields.username ? "!border-red-500 border-2" : ""}
           />
 
           {/* Password Error Message */}
           {passwordError && (
-            <p className="text-red-500 text-sm text-center mb-3" role="alert">
+            <p className="text-red-500 text-sm text-left mb-3" role="alert">
               {passwordError}
             </p>
           )}
@@ -190,6 +237,7 @@ const SignUp = () => {
                 onChange={handleChange}
                 autoComplete="new-password"
                 required
+                className={borderErrorFields.password ? "!border-red-500 border-2" : ""}
               />
             </div>
             <div className="flex-1">
@@ -202,6 +250,7 @@ const SignUp = () => {
                 onChange={handleChange}
                 autoComplete="new-password"
                 required
+                className={borderErrorFields.confirmPassword ? "!border-red-500 border-2" : ""}
               />
             </div>
           </div>
@@ -217,18 +266,18 @@ const SignUp = () => {
                 name="vehicleType"
                 value={formData.vehicleType}
                 onChange={handleChange}
-                className="input-field"
+                className={`input-field pr-6 ${borderErrorFields.vehicleType ? "!border-red-500 border-2" : ""}`}
                 required
               >
                 <option value="" disabled>
-                  Select a vehicle type
+                  Vehicle Type
                 </option>
-                <option value="two-wheeler">Two-Wheeler (Scooter, Motorcycle, Electric Bike)</option>
-                <option value="three-wheeler">Three-Wheeler (Auto Rickshaw, E-Rickshaw)</option>
-                <option value="lmv">Light Motor Vehicle (Hatchback, Sedan, SUV, Van)</option>
-                <option value="hmv">Heavy Motor Vehicle (Truck, Bus, Lorry)</option>
-                <option value="commercial">Commercial Vehicle (Taxi, Pickup Van, Delivery Van)</option>
-                <option value="special">Special Purpose Vehicle (Tractor, Crane, Ambulance, Fire Truck)</option>
+                <option value="two-wheeler">Two-Wheeler</option>
+                <option value="three-wheeler">Three-Wheeler</option>
+                <option value="lmv">Light Vehicle</option>
+                <option value="hmv">Heavy Vehicle</option>
+                <option value="commercial">Commercial</option>
+                <option value="special">Special Purpose</option>
               </select>
             </div>
             <div className="flex-1 space-y-2">
@@ -240,11 +289,11 @@ const SignUp = () => {
                 name="fuelType"
                 value={formData.fuelType}
                 onChange={handleChange}
-                className="input-field"
+                className={`input-field pr-6 ${borderErrorFields.fuelType ? "!border-red-500 border-2" : ""}`}
                 required
               >
                 <option value="" disabled>
-                  Select fuel type
+                  Fuel Type
                 </option>
                 <option value="petrol">Petrol</option>
                 <option value="diesel">Diesel</option>
@@ -264,6 +313,7 @@ const SignUp = () => {
             onChange={handleChange}
             autoComplete="off"
             required
+            className={borderErrorFields.vehicleNumber ? "!border-red-500 border-2" : ""}
           />
           <SubmitButton text="Register" isLoading={isLoading} />
         </form>

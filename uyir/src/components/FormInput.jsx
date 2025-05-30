@@ -10,6 +10,7 @@ export const FormInput = ({
   onChange,
   required = true,
   autoComplete,
+  className,
 }) => {
   return (
     <div className="space-y-1">
@@ -28,7 +29,7 @@ export const FormInput = ({
         required={required}
         autoComplete={autoComplete}
         placeholder={label}
-        className="input-field"
+        className={`input-field ${className || ""}`}
         aria-required={required}
       />
     </div>
