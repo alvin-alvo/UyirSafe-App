@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { FormInput } from "../components/FormInput";
 import { SubmitButton } from "../components/SubmitButton";
 
@@ -44,7 +44,7 @@ const Login = () => {
       navigate("/user");
     } catch (error) {
       console.error("Login error:", error);
-      setErrorMessage(error.message);
+      setErrorMessage("Enter your Username and Password");
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +92,13 @@ const Login = () => {
           />
           <SubmitButton text="Login" isLoading={isLoading} />
         </form>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
+           Don't have an account?{" "}
+            <Link to="/signup" className="text-red-500 hover:underline">
+               Sign up
+            </Link>
+        </p>
 
         <p className="mt-6 text-center text-sm text-gray-500">
           Coimbatore City | UyirSafe © 2025
