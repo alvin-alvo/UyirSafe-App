@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FormInput } from "../components/FormInput";
 import { SubmitButton } from "../components/SubmitButton";
+import styles from "../components/FormInput.module.css";
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -141,193 +142,214 @@ const SignUp = () => {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-[var(--secondary-color)] p-4">
-      <div className="card w-full max-w-md">
-        <div className="mb-7 text-center">
-          <h1 className="text-4xl font-bold mt-5 text-3d">
+      <div className="card w-full max-w-md lg:min-h-screen lg:max-w-none lg:grid lg:grid-cols-[1fr,2px,3fr] lg:gap-6">
+        {/* Left side for large screens */}
+        <div className="hidden lg:flex lg:flex-col lg:items-center lg:justify-center">
+          <h1 className="text-6xl font-bold text-3d">
             <span className="text-[var(--primary-color)]">Uyir</span>
             <span className="text-[var(--red-color)]">Safe</span>
           </h1>
-          <h2 className="text-3xl font-semibold text-[var(--primary-color)] mt-5">
-            Sign up
-          </h2>
         </div>
 
-        {errorMessage && (
-          <p className="text-red-500 text-sm text-center mb-6" role="alert">
-            {errorMessage}
-          </p>
-        )}
-        {successMessage && (
-          <p className="text-green-500 text-sm text-center mb-6" role="status">
-            {successMessage}
-          </p>
-        )}
+        
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-6">
-          {/* First Name and Last Name in one row */}
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <FormInput
-                label="First Name"
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                autoComplete="given-name"
-                required
-                className={borderErrorFields.firstName ? "!border-red-500 border-2" : ""}
-              />
-            </div>
-            <div className="flex-1">
-              <FormInput
-                label="Last Name"
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                autoComplete="family-name"
-                required
-                className={borderErrorFields.lastName ? "!border-red-500 border-2" : ""}
-              />
-            </div>
+        {/* Right side (form) for large screens, full width for small screens */}
+        <div className="lg:flex lg:flex-col lg:justify-center lg:p-6">
+          {/* Header for small screens */}
+          <div className="mb-7 text-center lg:hidden">
+            <h1 className="text-4xl font-bold mt-5 text-3d">
+              <span className="text-[var(--primary-color)]">Uyir</span>
+              <span className="text-[var(--red-color)]">Safe</span>
+            </h1>
+            <h2 className="text-3xl font-semibold text-[var(--primary-color)] mt-5">
+              Sign up
+            </h2>
           </div>
 
-          <FormInput
-            label="Email"
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            autoComplete="email"
-            required
-            className={borderErrorFields.email ? "!border-red-500 border-2" : ""}
-          />
+          {/* Header for large screens */}
+          <div className="hidden lg:block mb-6 text-center">
+            <h2 className="text-4xl font-semibold text-[var(--primary-color)]">
+              Sign up
+            </h2>
+          </div>
 
-          <FormInput
-            label="Username"
-            type="text"
-            id="username"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            autoComplete="username"
-            required
-            className={borderErrorFields.username ? "!border-red-500 border-2" : ""}
-          />
-
-          {/* Password Error Message */}
-          {passwordError && (
-            <p className="text-red-500 text-sm text-left mb-3" role="alert">
-              {passwordError}
+          {errorMessage && (
+            <p className="text-red-500 text-sm text-center mb-4" role="alert">
+              {errorMessage}
+            </p>
+          )}
+          {successMessage && (
+            <p className="text-green-500 text-sm text-center mb-4" role="status">
+              {successMessage}
             </p>
           )}
 
-          {/* Password and Confirm Password in one row */}
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <FormInput
-                label="Password"
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                autoComplete="new-password"
-                required
-                className={borderErrorFields.password ? "!border-red-500 border-2" : ""}
-              />
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            {/* First Name and Last Name in one row */}
+            <div className="flex space-x-4">
+              <div className="flex-1">
+                <FormInput
+                  label="First Name"
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  autoComplete="given-name"
+                  required
+                  className={borderErrorFields.firstName ? "!border-red-500 border-2" : ""}
+                />
+              </div>
+              <div className="flex-1">
+                <FormInput
+                  label="Last Name"
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  autoComplete="family-name"
+                  required
+                  className={borderErrorFields.lastName ? "!border-red-500 border-2" : ""}
+                />
+              </div>
             </div>
-            <div className="flex-1">
-              <FormInput
-                label="Confirm Password"
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                autoComplete="new-password"
-                required
-                className={borderErrorFields.confirmPassword ? "!border-red-500 border-2" : ""}
-              />
-            </div>
-          </div>
 
-          {/* Vehicle Type and Fuel Type in one row */}
-          <div className="flex space-x-4">
-            <div className="flex-1 space-y-2">
-              <label htmlFor="vehicleType" className="block text-sm font-medium text-gray-700">
-                Vehicle Type
-              </label>
-              <select
-                id="vehicleType"
-                name="vehicleType"
-                value={formData.vehicleType}
-                onChange={handleChange}
-                className={`input-field pr-6 ${borderErrorFields.vehicleType ? "!border-red-500 border-2" : ""}`}
-                required
-              >
-                <option value="" disabled>
+            <FormInput
+              label="Email"
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              autoComplete="email"
+              required
+              className={borderErrorFields.email ? "!border-red-500 border-2" : ""}
+            />
+
+            <FormInput
+              label="Username"
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              autoComplete="username"
+              required
+              className={borderErrorFields.username ? "!border-red-500 border-2" : ""}
+            />
+
+            {/* Password Error Message */}
+            {passwordError && (
+              <p className="text-red-500 text-sm text-left mb-3" role="alert">
+                {passwordError}
+              </p>
+            )}
+
+            {/* Password and Confirm Password in one row */}
+            <div className="flex space-x-4">
+              <div className="flex-1">
+                <FormInput
+                  label="Password"
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                  required
+                  className={borderErrorFields.password ? "!border-red-500 border-2" : ""}
+                />
+              </div>
+              <div className="flex-1">
+                <FormInput
+                  label="Confirm Password"
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                  required
+                  className={borderErrorFields.confirmPassword ? "!border-red-500 border-2" : ""}
+                />
+              </div>
+            </div>
+
+            {/* Vehicle Type and Fuel Type in one row */}
+            <div className="flex space-x-4">
+              <div className="flex-1 space-y-2">
+                <label htmlFor="vehicleType" className="block text-sm font-medium text-gray-700">
                   Vehicle Type
-                </option>
-                <option value="two-wheeler">Two-Wheeler</option>
-                <option value="three-wheeler">Three-Wheeler</option>
-                <option value="lmv">Light Vehicle</option>
-                <option value="hmv">Heavy Vehicle</option>
-                <option value="commercial">Commercial</option>
-                <option value="special">Special Purpose</option>
-              </select>
-            </div>
-            <div className="flex-1 space-y-2">
-              <label htmlFor="fuelType" className="block text-sm font-medium text-gray-700">
-                Fuel Type
-              </label>
-              <select
-                id="fuelType"
-                name="fuelType"
-                value={formData.fuelType}
-                onChange={handleChange}
-                className={`input-field pr-6 ${borderErrorFields.fuelType ? "!border-red-500 border-2" : ""}`}
-                required
-              >
-                <option value="" disabled>
+                </label>
+                <select
+                  id="vehicleType"
+                  name="vehicleType"
+                  value={formData.vehicleType}
+                  onChange={handleChange}
+                  className={`input-field selectReducedPadding ${borderErrorFields.vehicleType ? "!border-red-500 border-2" : ""}`}
+                  required
+                >
+                  <option value="" disabled>
+                    Vehicle Type
+                  </option>
+                  <option value="two-wheeler">Two-Wheeler</option>
+                  <option value="three-wheeler">Three-Wheeler</option>
+                  <option value="lmv">Light Vehicle</option>
+                  <option value="hmv">Heavy Vehicle</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="special">Special Purpose</option>
+                </select>
+              </div>
+              <div className="flex-1 space-y-2">
+                <label htmlFor="fuelType" className="block text-sm font-medium text-gray-700">
                   Fuel Type
-                </option>
-                <option value="petrol">Petrol</option>
-                <option value="diesel">Diesel</option>
-                <option value="ev">EV</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="cng">CNG</option>
-              </select>
+                </label>
+                <select
+                  id="fuelType"
+                  name="fuelType"
+                  value={formData.fuelType}
+                  onChange={handleChange}
+                  className={`input-field selectReducedPadding ${borderErrorFields.fuelType ? "!border-red-500 border-2" : ""}`}
+                  required
+                >
+                  <option value="" disabled>
+                    Fuel Type
+                  </option>
+                  <option value="petrol">Petrol</option>
+                  <option value="diesel">Diesel</option>
+                  <option value="ev">EV</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="cng">CNG</option>
+                </select>
+              </div>
             </div>
-          </div>
 
-          <FormInput
-            label="Vehicle Number"
-            type="text"
-            id="vehicleNumber"
-            name="vehicleNumber"
-            value={formData.vehicleNumber}
-            onChange={handleChange}
-            autoComplete="off"
-            required
-            className={borderErrorFields.vehicleNumber ? "!border-red-500 border-2" : ""}
-          />
-          <SubmitButton text="Register" isLoading={isLoading} />
-        </form>
+            <FormInput
+              label="Vehicle Number"
+              type="text"
+              id="vehicleNumber"
+              name="vehicleNumber"
+              value={formData.vehicleNumber}
+              onChange={handleChange}
+              autoComplete="off"
+              required
+              className={borderErrorFields.vehicleNumber ? "!border-red-500 border-2" : ""}
+            />
+            <SubmitButton text="Register" isLoading={isLoading} />
+          </form>
 
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account?{" "}
-          <Link to="/login" className="text-red-500 hover:underline">
-            Login
-          </Link>
-        </p>
+          <p className="mt-4 text-center text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link to="/login" className="text-red-500 hover:underline">
+              Login
+            </Link>
+          </p>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Coimbatore City | UyirSafe © 2025
-        </p>
+          <p className="mt-4 text-center text-sm text-gray-500">
+            Coimbatore City | UyirSafe © 2025
+          </p>
+        </div>
       </div>
     </main>
   );
