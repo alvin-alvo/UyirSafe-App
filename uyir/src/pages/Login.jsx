@@ -10,6 +10,7 @@ const Login = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [borderErrorFields,setBorderErrorFields] = useState({});
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -18,37 +19,61 @@ const Login = () => {
       ...prev,
       [name]: value,
     }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrorMessage("");
-
-    try {
-      const response = await fetch("http://localhost:6969/login", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Login failed");
-      }
-
-      console.log("Login successful");
-      navigate("/user");
-    } catch (error) {
-      console.error("Login error:", error);
-      setErrorMessage("Enter your Username and Password");
-    } finally {
-      setIsLoading(false);
+    if (borderErrorFields[name]) {
+      setBorderErrorFields((prev) => ({...prev, [name]: false}));
     }
   };
+
+  const validateForm = () => {
+  const errors = {};
+  const fields = ['username', 'password'];
+  fields.forEach((field) => {
+    if (!formData[field].trim()) {
+      errors[field] = true;
+    }
+  });
+  return errors;
+};
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setErrorMessage('');
+  setBorderErrorFields({});
+
+  const errors = validateForm();
+  if (Object.keys(errors).length > 0) {
+    setErrorMessage('Please fill in all required fields');
+    setBorderErrorFields(errors);
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:6969/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      const result = await response.json();
+      setErrorMessage('Invalid username or password');
+      setBorderErrorFields({ password: true });
+      throw new Error(result.error || 'Login failed');
+    }
+
+    console.log('Login successful');
+    navigate('/user');
+  } catch (error) {
+    console.error('Login error:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-[var(--secondary-color)] p-4">
@@ -79,6 +104,7 @@ const Login = () => {
             onChange={handleChange}
             autoComplete="username"
             required
+            className={borderErrorFields.username ? '!border-red-500 border-2' : ''}
           />
           <FormInput
             label="Password"
@@ -89,6 +115,7 @@ const Login = () => {
             onChange={handleChange}
             autoComplete="current-password"
             required
+            className={borderErrorFields.password ? '!border-red-500 border-2' : ''}
           />
           <SubmitButton text="Login" isLoading={isLoading} />
         </form>
