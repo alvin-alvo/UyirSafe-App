@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { FormInput } from '../components/FormInput';
 import { SubmitButton } from '../components/SubmitButton';
 import styles from '../components/FormInput.module.css';
+import backgroundImage from '../assets/background.png';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -99,7 +100,7 @@ const SignUp = () => {
       confirmPassword: formData.confirmPassword,
       vehicleType: formData.vehicleType,
       fuelType: formData.fuelType,
-      vehicleNumber: formData.vehicleNumber
+      vehicleNumber: formData.vehicleNumber,
     };
 
     try {
@@ -138,9 +139,16 @@ const SignUp = () => {
   };
 
   return (
-    <main className='min-h-screen flex items-center justify-center bg-[var(--secondary-color)] p-4'>
-      <div className='card w-full max-w-md lg:max-w-6xl lg:min-h-[70vh] lg:grid lg:grid-cols-[4fr,2px,5fr] lg:gap-4 bg-white shadow-lg rounded-lg'>
-        
+    <main
+      className='min-h-screen flex items-center justify-center p-4'
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      <div className='card w-full max-w-md lg:max-w-6xl lg:min-h-[70vh] lg:grid lg:grid-cols-[4fr,2px,5fr] lg:gap-4 glass rounded-lg'>
         <div className='hidden lg:flex lg:flex-col lg:items-center lg:justify-center'>
           <h1 className='text-7xl font-bold text-3d'>
             <span className='text-[var(--primary-color)]'>Uyir</span>
@@ -148,12 +156,9 @@ const SignUp = () => {
           </h1>
         </div>
 
-        
         <div className={`hidden lg:block ${styles.verticalDivider}`}></div>
 
-        
         <div className='lg:flex lg:flex-col lg:items-center lg:p-4'>
-          
           <div className='mb-6 text-center lg:hidden'>
             <h1 className='text-4xl font-bold mt-4 text-3d'>
               <span className='text-[var(--primary-color)]'>Uyir</span>
@@ -164,9 +169,8 @@ const SignUp = () => {
             </h2>
           </div>
 
-          
           <div className='hidden lg:block mb-4 text-left w-full max-w-md'>
-            <h2 className='text-3xl font-semibold text-[var(--primary-color)]'>
+            <h2 className='text-3xl font-semibold text-red-500'>
               Sign up
             </h2>
           </div>
@@ -183,7 +187,6 @@ const SignUp = () => {
           )}
 
           <form onSubmit={handleSubmit} noValidate className='space-y-3 w-full max-w-md'>
-            
             <div className='flex space-x-3'>
               <div className='flex-1'>
                 <FormInput
@@ -243,7 +246,6 @@ const SignUp = () => {
               </p>
             )}
 
-            
             <div className='flex space-x-3'>
               <div className='flex-1'>
                 <FormInput
@@ -273,7 +275,6 @@ const SignUp = () => {
               </div>
             </div>
 
-            
             <div className='flex space-x-3'>
               <div className='flex-1 space-y-2'>
                 <label htmlFor='vehicleType' className='block text-sm font-medium text-gray-700'>
@@ -334,12 +335,13 @@ const SignUp = () => {
               className={borderErrorFields.vehicleNumber ? '!border-red-500 border-2' : ''}
             />
 
-            <SubmitButton text='Register' isLoading={isLoading} />
+            <SubmitButton text='Register' isLoading={isLoading} 
+            className='!bg-[var(--red-color)] hover:!bg-red-700'/>
           </form>
 
           <p className='mt-3 text-center text-sm text-gray-600'>
             Already have an account?{' '}
-            <Link to='/login' className='text-red-500 hover:underline'>
+            <Link to='/login' className='text-[var(--primary-color)] hover:underline'>
               Login
             </Link>
           </p>

@@ -25,7 +25,7 @@ body {
 }
 
 .card {
-  @apply bg-white shadow-lg rounded-[var(--border-radius)] p-6;
+  @apply rounded-[var(--border-radius)] p-6;
 }
 
 .input-field {
@@ -38,9 +38,18 @@ body {
 
 .text-3d {
   text-shadow: 
-    1px 1px 0 rgba(255, 255, 255, 0.8), /* Light highlight for 3D effect */
-    -1px -1px 0 rgba(0, 0, 0, 0.3), /* Dark shadow for depth */
-    2px 2px 4px rgba(0, 0, 0, 0.2); /* Softer shadow for realism */
+    1px 1px 0 rgba(255, 255, 255, 0.8), 
+    -1px -1px 0 rgba(0, 0, 0, 0.3), 
+    2px 2px 4px rgba(0, 0, 0, 0.2); 
+}
+
+.glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(200, 200, 200, 0.2));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), inset 0 0 8px rgba(255, 255, 255, 0.1);
+  padding: 1.5rem; 
 }
 
 @media (max-width: 640px) {
@@ -50,10 +59,13 @@ body {
   .card {
     @apply p-4;
   }
+  .glass {
+    padding: 1rem;
+  }
   .text-3d {
     text-shadow: 
       1px 1px 0 rgba(255, 255, 255, 0.8),
       -1px -1px 0 rgba(0, 0, 0, 0.3),
-      1px 1px 2px rgba(0, 0, 0, 0.2); /* Slightly reduced for mobile */
+      1px 1px 2px rgba(0, 0, 0, 0.2); 
   }
 }

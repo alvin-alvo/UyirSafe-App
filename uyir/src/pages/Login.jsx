@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { FormInput } from "../components/FormInput";
 import { SubmitButton } from "../components/SubmitButton";
 
+import backgroundImage from '../assets/background.png';
+
 const Login = () => {
   const [formData, setFormData] = useState({
     username: "",
@@ -76,8 +78,16 @@ const Login = () => {
 };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[var(--secondary-color)] p-4">
-      <div className="card w-full max-w-md">
+    <main
+  className='min-h-screen flex items-center justify-center p-4'
+  style={{
+    backgroundImage: `url(${backgroundImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  }}
+>
+      <div className="card w-full max-w-md glass rounded-lg">
         <div className="mb-7 text-center"> 
           <h1 className="text-4xl font-bold mt-5 text-3d">
             <span className="text-[var(--primary-color)]">Uyir</span>
@@ -117,7 +127,8 @@ const Login = () => {
             required
             className={borderErrorFields.password ? '!border-red-500 border-2' : ''}
           />
-          <SubmitButton text="Login" isLoading={isLoading} />
+          <SubmitButton text="Login" isLoading={isLoading}
+          className='hover:!bg-[#152c6b]' />
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-600">
