@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { LoadScript } from "@react-google-maps/api"; // Import LoadScript for Google Maps
 import "./App.css";
-import { SignUp } from "./pages/SignUp.jsx";
-import { Login } from "./pages/Login.jsx";
+/*import { SignUp } from "./pages/SignUp.jsx";*/
+import SignUp from './pages/SignUp.jsx'; 
+/*import { Login } from "./pages/Login.jsx";*/
+import Login from './pages/Login.jsx';
+
 import { ReportsPage } from "./pages/ReportsPage.jsx";
 import { NewReport } from "./pages/NewReport.jsx";
 import { AdminDashboard } from "./pages/AdminPage.jsx";
@@ -18,6 +21,9 @@ const App = () => {
     <LoadScript googleMapsApiKey={key}>
       <Router>
         <Routes>
+
+          <Route path="/" element={<Login />} /> //b added this
+
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/user" element={<ReportsPage />} />

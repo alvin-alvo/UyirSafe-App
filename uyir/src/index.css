@@ -1,12 +1,71 @@
-* {
-  font-family: "Poppins";
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #1e3a8a; /* Navy blue for headers, buttons, "Uyir" */
+  --secondary-color: #f3f4f6; /* Light gray for backgrounds */
+  --accent-color: #1e3a8a; /* Navy blue for buttons (changed from green) */
+  --text-color: #1f2937; /* Dark gray for text */
+  --red-color: #dc2626; /* Red for "Safe" */
+  --border-radius: 15px;
 }
 
 body {
-  background-color: #f9f9f9; /* Light background color */
-  background-image: radial-gradient(circle, #6e6d6d 1px, transparent 1px); /* Darker dots */
-  background-size: 20px 20px; /* Adjust the size of the dots */
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.card {
+  @apply rounded-[var(--border-radius)] p-6;
+}
+
+.input-field {
+  @apply w-full p-3 border border-gray-300 rounded-[var(--border-radius)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] transition;
+}
+
+.btn-primary {
+  @apply w-full bg-[var(--accent-color)] text-white font-semibold py-3 rounded-[var(--border-radius)] hover:bg-[var(--primary-color)] hover:scale-105 transition duration-200 disabled:opacity-50;
+}
+
+.text-3d {
+  text-shadow: 
+    1px 1px 0 rgba(255, 255, 255, 0.8), 
+    -1px -1px 0 rgba(0, 0, 0, 0.3), 
+    2px 2px 4px rgba(0, 0, 0, 0.2); 
+}
+
+.glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(200, 200, 200, 0.2));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), inset 0 0 8px rgba(255, 255, 255, 0.1);
+  padding: 1.5rem; 
+}
+
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
+  }
+  .card {
+    @apply p-4;
+  }
+  .glass {
+    padding: 1rem;
+  }
+  .text-3d {
+    text-shadow: 
+      1px 1px 0 rgba(255, 255, 255, 0.8),
+      -1px -1px 0 rgba(0, 0, 0, 0.3),
+      1px 1px 2px rgba(0, 0, 0, 0.2); 
+  }
 }
