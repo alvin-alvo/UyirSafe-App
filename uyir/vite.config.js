@@ -6,4 +6,7 @@ dotenv.config();
 
 export default defineConfig({
   plugins: [react()],
+  css: {
+    postcss: './postcss.config.js', // Ensure PostCSS config is used
+  },
 });
