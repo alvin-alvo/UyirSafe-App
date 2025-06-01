@@ -15,8 +15,8 @@ import { useAuth } from '../context/AuthContext';
 import styles from '../styles/User.module.css';
 import backgroundImage from '../assets/user-background.png';
 
-const User = () => {
-  const { user, loading } = useAuth();
+const Profile = () => {
+  const { user, loading, logout } = useAuth();
 
   // Redirect to login if not authenticated
   if (!loading && !user) {
@@ -29,6 +29,11 @@ const User = () => {
   }
 
   const username = user.username || 'Guest';
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/login';
+  };
 
   return (
     <main
@@ -141,68 +146,52 @@ const User = () => {
       <div className={styles.mainContent}>
         <div className="card glass rounded-lg p-6 mt-6">
           <h2 className="text-2xl font-semibold text-[var(--primary-color)]">
-            Welcome {username}
+            Username: {username}
           </h2>
-        </div>
-        <div className="mt-6 max-w-md">
-          <NavLink to="/user/new-report" className="w-full">
-            <button
-              className="relative min-h-[97px] w-full overflow-hidden text-2xl text-white text-center p-[2rem] border-none 
-              cursor-pointer bg-transparent rounded-lg transition-transform duration-200 ease flex items-center gap-2"
-              style={{ transform: 'translateY(0)' }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'translateY(1px)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onFocus={(e) => e.currentTarget.style.outline = '2px solid rgba(114, 136, 199, 1)'}
-              onBlur={(e) => e.currentTarget.style.outline = 'none'}
-            >
-              <div
-                className="absolute inset-0 h-full w-full"
-                style={{
-                  backgroundColor: 'var(--red-color)',
-                  transition: 'background-color 0.3s ease',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--red-color)'}
-              />
-              <PlusCircleIcon className="h-12 w-12 relative z-10" />
-              <span className="relative z-10 font-semibold">New Report</span>
-            </button>
-          </NavLink>
-        </div>
-        <style jsx>{`
-          button:hover {
-            transform: translateY(-2px);
-          }
-          button:active {
-            transform: translateY(1px);
-          }
-          button:focus {
-            outline: none;
-          }
-          button:focus-visible {
-            outline: 2px solid rgba(114, 136, 199, 1);
-            outline-offset: 2px;
-          }
-          @media (max-width: 768px) {
-            button {
-              min-height: 80px;
-              font-size: 1.5rem;
-              padding: 1.5rem;
+          <p className="text-gray-600 mt-2">
+            Welcome to your profile, {username}!
+          </p>
+          <button
+            onClick={handleLogout}
+            className="mt-4 relative px-4 py-2 overflow-hidden text-[1rem] text-white text-center border-none cursor-pointer bg-transparent rounded-full transition-transform duration-200 ease"
+            style={{ transform: 'translateY(0)' }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'translateY(1px)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onFocus={(e) => e.currentTarget.style.outline = '2px solid rgba(114, 136, 199, 1)'}
+            onBlur={(e) => e.currentTarget.style.outline = 'none'}
+          >
+            <div
+              className="absolute inset-0 h-full w-full"
+              style={{
+                backgroundColor: 'var(--red-color)',
+                transition: 'background-color 0.3s ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--red-color)'}
+            />
+            <span className="relative z-10 font-semibold">Logout</span>
+          </button>
+          <style jsx>{`
+            button:hover {
+              transform: translateY(-2px);
             }
-          }
-          @media (max-width: 480px) {
-            button {
-              min-height: 60px;
-              font-size: 1.25rem;
-              padding: 1rem;
+            button:active {
+              transform: translateY(1px);
             }
-          }
-        `}</style>
+            button:focus {
+              outline: none;
+            }
+            button:focus-visible {
+              outline: 2px solid rgba(114, 136, 199, 1);
+              outline-offset: 2px;
+            }
+          `}</style>
+        </div>
       </div>
     </main>
   );
 };
 
-export default User;
+export default Profile;

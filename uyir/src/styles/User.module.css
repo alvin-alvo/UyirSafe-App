@@ -108,6 +108,6 @@
 }
 
 .serviceButton:hover {
-  background-color: #64748b; /* Slate-500, lighter slate */
+  background-color: #64748b; 
   transform: scale(1.05);
 }
