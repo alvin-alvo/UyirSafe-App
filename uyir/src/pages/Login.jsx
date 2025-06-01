@@ -4,7 +4,7 @@ import { FormInput } from "../components/FormInput";
 import { SubmitButton } from "../components/SubmitButton";
 import { useAuth } from "../context/AuthContext";
 
-import backgroundImage from '../assets/background.png';
+import backgroundImage from '../assets/background.svg';
 
 const Login = () => {
   const [formData, setFormData] = useState({
