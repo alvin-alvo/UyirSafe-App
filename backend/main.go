@@ -46,5 +46,7 @@ func main() {
 
 	r.POST("/similarReports",handler.SimilarReports)
 
+	r.GET("/me",handler.Me)
+
 	r.Run(":6969")
 }

@@ -54,3 +54,38 @@ func LoginUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "user": storedUser.Name})
 }
+
+
+func Me(c *gin.Context) {
+
+	token, err := c.Cookie("session_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Session token not found in cookie"})
+		return
+	}
+
+	var session model.Session
+	if err := Db.Where("token = ?", token).First(&session).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session"})
+		return
+	}
+
+	if session.ExpiresAt.Before(time.Now()) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Session expired"})
+		return
+	}
+
+	var user model.User
+	if err := Db.First(&user, "id = ?", session.UserID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":       user.ID,
+		"username": user.Name,
+		"email":    user.Email,
+		"points":   user.Points,
+		"role":     user.Role,
+	})
+}
