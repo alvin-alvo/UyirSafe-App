@@ -88,7 +88,7 @@ const User = () => {
 
   return (
     <main
-      className="min-h-screen flex p-4"
+      className="min-h-screen flex"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -104,65 +104,67 @@ const User = () => {
           </h1>
         </div>
         <div className={styles.navContent}>
-          <h2 className={styles.menuHeading}>Menu</h2>
-          <ul className={styles.navList}>
-            <li>
-              <NavLink
-                to="/user"
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ''}`
-                }
-                end
-              >
-                <HomeIcon className={styles.navIcon} />
-                <span>Home</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/user/new-report"
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ''}`
-                }
-              >
-                <PlusCircleIcon className={styles.navIcon} />
-                <span>New Report</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/user/previous-reports"
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ''}`
-                }
-              >
-                <ArrowPathIcon className={styles.navIcon} />
-                <span>Previous Report</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/user/redeem"
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ''}`
-                }
-              >
-                <SparklesIcon className={styles.navIcon} />
-                <span>Redeem Points</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/user/profile"
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ''}`
-                }
-              >
-                <UserIcon className={styles.navIcon} />
-                <span>User Profile</span>
-              </NavLink>
-            </li>
-          </ul>
+          <div className={styles.menuSection}>
+            <h2 className={styles.menuHeading}>Menu</h2>
+            <ul className={styles.navList}>
+              <li>
+                <NavLink
+                  to="/user"
+                  className={({ isActive }) =>
+                    `${styles.navItem} ${isActive ? styles.active : ''}`
+                  }
+                  end
+                >
+                  <HomeIcon className={styles.navIcon} />
+                  <span>Home</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/user/new-report"
+                  className={({ isActive }) =>
+                    `${styles.navItem} ${isActive ? styles.active : ''}`
+                  }
+                >
+                  <PlusCircleIcon className={styles.navIcon} />
+                  <span>New Report</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/user/previous-reports"
+                  className={({ isActive }) =>
+                    `${styles.navItem} ${isActive ? styles.active : ''}`
+                  }
+                >
+                  <ArrowPathIcon className={styles.navIcon} />
+                  <span>Previous Report</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/user/redeem"
+                  className={({ isActive }) =>
+                    `${styles.navItem} ${isActive ? styles.active : ''}`
+                  }
+                >
+                  <SparklesIcon className={styles.navIcon} />
+                  <span>Redeem Points</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/user/profile"
+                  className={({ isActive }) =>
+                    `${styles.navItem} ${isActive ? styles.active : ''}`
+                  }
+                >
+                  <UserIcon className={styles.navIcon} />
+                  <span>User Profile</span>
+                </NavLink>
+              </li>
+            </ul>
+          </div>
           <div className={styles.otherServices}>
             <h2 className={styles.menuHeading}>Other Services</h2>
             <ul className={styles.serviceList}>
@@ -324,13 +326,12 @@ const User = () => {
         }
         button:focus-visible {
           outline: 2px solid rgba(114, 136, 199, 1);
-          outline-offset: 2px;
         }
         @media (max-width: 768px) {
           button {
-            min-height: 80px;
+            min-height: 60px;
             font-size: 1.5rem;
-            padding: 1.5rem;
+            padding: 1rem;
           }
         }
         @media (max-width: 480px) {
