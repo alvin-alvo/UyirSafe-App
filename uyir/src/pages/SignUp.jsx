@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { FormInput } from '../components/FormInput';
 import { SubmitButton } from '../components/SubmitButton';
 import styles from '../components/FormInput.module.css';
-import backgroundImage from '../assets/background.png';
+import backgroundImage from '../assets/background.svg';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({

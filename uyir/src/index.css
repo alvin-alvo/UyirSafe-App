@@ -5,7 +5,7 @@
 :root {
   --primary-color: #1e3a8a; /* Navy blue for headers, buttons, "Uyir" */
   --secondary-color: #f3f4f6; /* Light gray for backgrounds */
-  --accent-color: #1e3a8a; /* Navy blue for buttons (changed from green) */
+  --accent-color: #1e3a8a; /* Navy blue for buttons */
   --text-color: #1f2937; /* Dark gray for text */
   --red-color: #dc2626; /* Red for "Safe" */
   --border-radius: 15px;

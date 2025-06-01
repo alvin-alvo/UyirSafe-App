@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FormInput } from "../components/FormInput";
 import { SubmitButton } from "../components/SubmitButton";
+import { useAuth } from "../context/AuthContext";
 
-import backgroundImage from '../assets/background.png';
+import backgroundImage from '../assets/background.svg';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -12,8 +13,9 @@ const Login = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [borderErrorFields,setBorderErrorFields] = useState({});
+  const [borderErrorFields, setBorderErrorFields] = useState({});
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,71 +24,58 @@ const Login = () => {
       [name]: value,
     }));
     if (borderErrorFields[name]) {
-      setBorderErrorFields((prev) => ({...prev, [name]: false}));
+      setBorderErrorFields((prev) => ({ ...prev, [name]: false }));
     }
   };
 
   const validateForm = () => {
-  const errors = {};
-  const fields = ['username', 'password'];
-  fields.forEach((field) => {
-    if (!formData[field].trim()) {
-      errors[field] = true;
-    }
-  });
-  return errors;
-};
+    const errors = {};
+    const fields = ['username', 'password'];
+    fields.forEach((field) => {
+      if (!formData[field].trim()) {
+        errors[field] = true;
+      }
+    });
+    return errors;
+  };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setErrorMessage('');
-  setBorderErrorFields({});
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage('');
+    setBorderErrorFields({});
 
-  const errors = validateForm();
-  if (Object.keys(errors).length > 0) {
-    setErrorMessage('Please fill in all required fields');
-    setBorderErrorFields(errors);
-    setIsLoading(false);
-    return;
-  }
-
-  try {
-    const response = await fetch('http://localhost:6969/login', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    });
-
-    if (!response.ok) {
-      const result = await response.json();
-      setErrorMessage('Invalid username or password');
-      setBorderErrorFields({ password: true });
-      throw new Error(result.error || 'Login failed');
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setErrorMessage('Please fill in all required fields');
+      setBorderErrorFields(errors);
+      setIsLoading(false);
+      return;
     }
 
-    console.log('Login successful');
-    navigate('/user');
-  } catch (error) {
-    console.error('Login error:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      await login(formData.username, formData.password);
+      console.log('Login successful');
+      navigate('/user');
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrorMessage('Invalid username or password');
+      setBorderErrorFields({ password: true });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <main
-  className='min-h-screen flex items-center justify-center p-4'
-  style={{
-    backgroundImage: `url(${backgroundImage})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-  }}
->
+      className='min-h-screen flex items-center justify-center p-4'
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       <div className="card w-full max-w-md glass rounded-lg">
         <div className="mb-7 text-center"> 
           <h1 className="text-4xl font-bold mt-5 text-3d">
@@ -128,14 +117,14 @@ const Login = () => {
             className={borderErrorFields.password ? '!border-red-500 border-2' : ''}
           />
           <SubmitButton text="Login" isLoading={isLoading}
-          className='hover:!bg-[#152c6b]' />
+            className='hover:!bg-[#152c6b]' />
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-600">
-           Don't have an account?{" "}
-            <Link to="/signup" className="text-red-500 hover:underline">
-               Sign up
-            </Link>
+          Don't have an account?{" "}
+          <Link to="/signup" className="text-red-500 hover:underline">
+            Sign up
+          </Link>
         </p>
 
         <p className="mt-6 text-center text-sm text-gray-500">
