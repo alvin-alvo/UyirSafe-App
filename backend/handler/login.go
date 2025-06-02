@@ -87,5 +87,10 @@ func Me(c *gin.Context) {
 		"email":    user.Email,
 		"points":   user.Points,
 		"role":     user.Role,
+		"firstName": user.FirstName,
+		"lastName":  user.LastName,
+		"vehicleType":   user.VechicleType,
+		"fuelType": user.FuelType,
+		"vehicleNumber": user.VechicleNumber,
 	})
 }
