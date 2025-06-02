@@ -94,6 +94,7 @@ const User = () => {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
       }}
     >
       <nav className={`${styles.nav} glass`}>
