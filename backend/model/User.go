@@ -15,7 +15,7 @@ type User struct {
 	Password string `json:"password" gorm:"not null"`
 	Points   int    `json:"points"`
 	Role     string `json:"role"`
-	VechicleType string `json:"vechicleType"`
+	VechicleType string `json:"vehicleType"`
 	FuelType string `json:"fuelType"`
 	VechicleNumber string `json:"vehicleNumber"`
 }
