@@ -36,14 +36,14 @@ const Profile = () => {
 
   const [profileImg, setProfileImg] = useState('/default-profile.jpg'); // path to default pfp
 
-const handleProfileChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = () => setProfileImg(reader.result);
-    reader.readAsDataURL(file);
-  }
-};
+  const handleProfileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setProfileImg(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
 
 
   return (
@@ -87,62 +87,62 @@ const handleProfileChange = (e) => {
       </nav>
 
       <div className={styles.mainContent + " flex-1"}>
-  {/* Header with Profile Photo & Logout */}
-<div className="card glass rounded-lg p-6 mb-6 flex items-center justify-between relative">
-  {/* Profile & Username Section */}
-  <div className="flex items-center space-x-4">
-    <div className="relative group w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300">
-      <img
-        src={profileImg || '/default-profile.jpg'}
-        alt="Profile"
-        className="object-cover w-full h-full group-hover:blur-sm transition duration-300"
-      />
-      <label
-        htmlFor="profile-upload"
-        className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition duration-300 cursor-pointer"
-      >
-        <svg
-          className="w-6 h-6 text-white"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>
-      </label>
-      <input
-        id="profile-upload"
-        type="file"
-        accept="image/*"
-        onChange={handleProfileChange}
-        className="hidden"
-      />
-    </div>
+        {/* Header with Profile Photo & Logout */}
+        <div className="card glass rounded-lg p-6 mb-6 flex items-center justify-between relative">
+          {/* Profile & Username Section */}
+          <div className="flex items-center space-x-4">
+            <div className="relative group w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300">
+              <img
+                src={profileImg || '/default-profile.jpg'}
+                alt="Profile"
+                className="object-cover w-full h-full group-hover:blur-sm transition duration-300"
+              />
+              <label
+                htmlFor="profile-upload"
+                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition duration-300 cursor-pointer"
+              >
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </label>
+              <input
+                id="profile-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleProfileChange}
+                className="hidden"
+              />
+            </div>
 
-    <div>
-      <h2 className="text-xl font-semibold text-[var(--primary-color)]">{username}</h2>
-    </div>
-  </div>
+            <div>
+              <h2 className="text-xl font-semibold text-[var(--primary-color)]">{username}</h2>
+            </div>
+          </div>
 
-  {/* Logout Button */}
-  <button
-    onClick={handleLogout}
-    className="bg-[var(--red-color)] text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-  >
-    Logout
-  </button>
-</div>
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="bg-[var(--red-color)] text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+          >
+            Logout
+          </button>
+        </div>
 
 
- 
-  <div className="grid  gap-6">
-    
-    <PersonalDetails username={username} />
 
-    
-  </div>
-</div>
+        <div className="grid  gap-6">
+
+          <PersonalDetails username={username} />
+
+
+        </div>
+      </div>
 
 
     </main>

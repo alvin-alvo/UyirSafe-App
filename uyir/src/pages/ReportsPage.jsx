@@ -100,6 +100,7 @@ export const ReportsPage = () => {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
       }}
     >
       <nav className={`${userStyles.nav} glass`}>
@@ -239,11 +240,10 @@ export const ReportsPage = () => {
                       <td className="py-4 px-6 text-white">{formatDate(report.date)}</td>
                       <td className="py-4 px-6">
                         <span
-                          className={`px-2 py-1 rounded-full text-sm font-semibold ${
-                            report.status === 'Resolved'
+                          className={`px-2 py-1 rounded-full text-sm font-semibold ${report.status === 'Resolved'
                               ? 'bg-green-500 bg-opacity-20 text-green-400'
                               : 'bg-yellow-500 bg-opacity-20 text-yellow-400'
-                          }`}
+                            }`}
                         >
                           {report.status}
                         </span>
