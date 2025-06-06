@@ -111,6 +111,7 @@ export const ReportsPage = () => {
           </h1>
         </div>
         <div className={userStyles.navContent}>
+          <div className={styles.menuSection}>
           <h2 className={userStyles.menuHeading}>Menu</h2>
           <ul className={userStyles.navList}>
             <li>
@@ -170,6 +171,7 @@ export const ReportsPage = () => {
               </NavLink>
             </li>
           </ul>
+          </div>
           <div className={userStyles.otherServices}>
             <h2 className={userStyles.menuHeading}>Other Services</h2>
             <ul className={userStyles.serviceList}>
