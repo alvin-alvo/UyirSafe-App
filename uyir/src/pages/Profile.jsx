@@ -66,6 +66,7 @@ const Profile = () => {
           </h1>
         </div>
         <div className={styles.navContent}>
+          <div className={styles.menuSection}>
           <h2 className={styles.menuHeading}>Menu</h2>
           <ul className={styles.navList}>
             <li><NavLink to="/user" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} end><HomeIcon className={styles.navIcon} /><span>Home</span></NavLink></li>
@@ -74,6 +75,7 @@ const Profile = () => {
             <li><NavLink to="/user/redeem" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><SparklesIcon className={styles.navIcon} /><span>Redeem Points</span></NavLink></li>
             <li><NavLink to="/user/profile" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><UserIcon className={styles.navIcon} /><span>User Profile</span></NavLink></li>
           </ul>
+          </div>
           <div className={styles.otherServices}>
             <h2 className={styles.menuHeading}>Other Services</h2>
             <ul className={styles.serviceList}>

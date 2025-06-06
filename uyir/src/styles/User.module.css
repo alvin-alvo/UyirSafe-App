@@ -13,6 +13,11 @@
   z-index: 1000;
 }
 
+.active {
+  background: #1e3b8a7b; /* or any highlight color */
+  color: black;
+}
+
 .logoContainer {
   text-align: left;
 }
@@ -63,6 +68,7 @@
   background-color: var(--primary-color);
   color: #ffffff;
 }
+
 
 .activeLink {
   background-color: rgba(30, 58, 138, 0.1);
