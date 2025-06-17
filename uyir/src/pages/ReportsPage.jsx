@@ -100,6 +100,7 @@ export const ReportsPage = () => {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
       }}
     >
       <nav className={`${userStyles.nav} glass`}>
@@ -110,6 +111,7 @@ export const ReportsPage = () => {
           </h1>
         </div>
         <div className={userStyles.navContent}>
+          <div className={styles.menuSection}>
           <h2 className={userStyles.menuHeading}>Menu</h2>
           <ul className={userStyles.navList}>
             <li>
@@ -169,6 +171,7 @@ export const ReportsPage = () => {
               </NavLink>
             </li>
           </ul>
+          </div>
           <div className={userStyles.otherServices}>
             <h2 className={userStyles.menuHeading}>Other Services</h2>
             <ul className={userStyles.serviceList}>
@@ -239,11 +242,10 @@ export const ReportsPage = () => {
                       <td className="py-4 px-6 text-white">{formatDate(report.date)}</td>
                       <td className="py-4 px-6">
                         <span
-                          className={`px-2 py-1 rounded-full text-sm font-semibold ${
-                            report.status === 'Resolved'
+                          className={`px-2 py-1 rounded-full text-sm font-semibold ${report.status === 'Resolved'
                               ? 'bg-green-500 bg-opacity-20 text-green-400'
                               : 'bg-yellow-500 bg-opacity-20 text-yellow-400'
-                          }`}
+                            }`}
                         >
                           {report.status}
                         </span>

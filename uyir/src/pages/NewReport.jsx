@@ -1,222 +1,162 @@
+// import statements
 import React, { useState, useEffect } from "react";
+import { NavLink, useNavigate } from 'react-router-dom';
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import * as tf from "@tensorflow/tfjs";
-import styles from "./NewReport.module.css";
-import { useNavigate } from "react-router-dom";
+import {
+  HomeIcon, PlusCircleIcon, ArrowPathIcon, SparklesIcon, UserIcon,
+  Cog8ToothIcon, HandRaisedIcon, ShieldCheckIcon, ChatBubbleLeftRightIcon,
+  MapPinIcon, PhotoIcon, DocumentTextIcon, CheckCircleIcon,
+  ExclamationTriangleIcon, ClockIcon, ArrowPathIcon as SpinnerIcon
+} from '@heroicons/react/24/outline';
+import { useAuth } from '../context/AuthContext';
+import backgroundImage from '../assets/user-background.png';
+import styles from '../styles/User.module.css';
 
-// Static values for report types
+// constants
 const reportTypes = ["Car crash", "Pothole", "Fallen tree", "Flood"];
-
-// Google Maps API and Map Settings
 const mapContainerStyle = { width: "100%", height: "300px" };
-const defaultCenter = { lat: 11.051362294728685, lng: 76.94148112125961 }; // Default center if geolocation fails
-
-// TensorFlow model URLs and threshold
+const defaultCenter = { lat: 11.051362294728685, lng: 76.94148112125961 };
 const MODEL_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/model.json";
 const METADATA_URL = "https://storage.googleapis.com/tm-model/wpaa0No-z/metadata.json";
 const MIN_CONFIDENCE = 1;
 
+// main component
 export const NewReport = () => {
-  // State for ML prediction
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [model, setModel] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [predictionValid, setPredictionValid] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
-  const navigate = useNavigate();
+  const [isModelLoading, setIsModelLoading] = useState(true);
 
-  // Report form state
   const [selectedType, setSelectedType] = useState("Car crash");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Map location state: coordinates and the reverse-geocoded address.
   const [selectedCoordinates, setSelectedCoordinates] = useState(null);
   const [address, setAddress] = useState("");
-  const [mapCenter, setMapCenter] = useState(defaultCenter); // Center of the map
-
-  // State for similar reports fetched from the backend.
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [similarReports, setSimilarReports] = useState([]);
+  const [loadingSimilarReports, setLoadingSimilarReports] = useState(false);
 
-  // Load the TensorFlow model and metadata on mount.
+  const [previewUrl, setPreviewUrl] = useState(null);
+
   useEffect(() => {
-    const loadModelAndMetadata = async () => {
+    const loadModel = async () => {
       try {
+        setIsModelLoading(true);
         const loadedModel = await tf.loadLayersModel(MODEL_URL);
         setModel(loadedModel);
-        const response = await fetch(METADATA_URL);
-        const metaDataJson = await response.json();
-        setMetadata(metaDataJson);
-      } catch (error) {
-        console.error("Error loading model or metadata:", error);
+        const meta = await fetch(METADATA_URL).then(res => res.json());
+        setMetadata(meta);
+      } catch (err) {
+        console.error("Error loading model:", err);
+      } finally {
+        setIsModelLoading(false);
       }
     };
-
-    loadModelAndMetadata();
+    loadModel();
   }, []);
 
-  // Fetch user's current location on mount
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setMapCenter({ lat: latitude, lng: longitude }); // Set map center to user's location
-        },
-        (error) => {
-          console.error("Error retrieving location:", error);
-          setMapCenter(defaultCenter); // Fallback to default center
-        }
+        pos => setMapCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => setMapCenter(defaultCenter)
       );
     } else {
-      console.error("Geolocation is not supported by this browser.");
-      setMapCenter(defaultCenter); // Fallback to default center
+      setMapCenter(defaultCenter);
     }
   }, []);
 
-  // Fetch similar reports when the user selects a new location.
   useEffect(() => {
     if (selectedCoordinates) {
-      const fetchSimilarReports = async () => {
+      const fetchSimilar = async () => {
+        setLoadingSimilarReports(true);
         try {
-          const url = `http://localhost:6969/similarReports`;
-          const requestBody = {
-            latitude: selectedCoordinates.lat,
-            longitude: selectedCoordinates.lng,
-          };
-
-          const response = await fetch(url, {
-            method: "POST", // Using POST to send the body data
-            headers: {
-              "Content-Type": "application/json",
-            },
+          const res = await fetch("http://localhost:6969/similarReports", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify(requestBody),
+            body: JSON.stringify(selectedCoordinates)
           });
-
-          if (!response.ok) {
-            throw new Error(`Error: ${response.statusText}`);
-          }
-          const data = await response.json();
-          // Assume the response returns an object with a "similar_reports" key.
+          const data = await res.json();
           setSimilarReports(data.similar_reports || []);
-        } catch (error) {
-          console.error("Error fetching similar reports:", error);
-          setSimilarReports([]);
+        } catch (err) {
+          console.error("Similar reports error:", err);
+        } finally {
+          setLoadingSimilarReports(false);
         }
       };
-
-      fetchSimilarReports();
+      fetchSimilar();
     }
   }, [selectedCoordinates]);
 
-  // Allow manual selection of report type.
   const handleTypeSelect = (event) => {
-    setSelectedType(event.target.value);
-  };
+  setSelectedType(event.target.value);
+};
 
-  // Reverse geocode coordinates into a human-friendly address.
+
   const fetchAddress = (lat, lng) => {
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       if (status === "OK" && results[0]) {
         setAddress(results[0].formatted_address);
       } else {
-        console.error("Geocoder failed due to: " + status);
         setAddress("Unknown location");
       }
     });
   };
 
-  // When the map is clicked, update the coordinates and fetch the address.
-  const handleMapClick = (event) => {
-    const lat = event.latLng.lat();
-    const lng = event.latLng.lng();
+  const handleMapClick = (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
     setSelectedCoordinates({ lat, lng });
     fetchAddress(lat, lng);
   };
 
-  // When a file is selected, load it and run the prediction.
-  const handleFileChange = async (event) => {
-    const file = event.target.files[0];
-    setSelectedFile(file);
-    setPredictionValid(false);
-    setPredictionResult(null);
+  const handleFileChange = async (e) => {
+  const file = e.target.files[0];
+  setSelectedFile(file);
+  setPredictionValid(false);
+  setPredictionResult(null);
 
-    if (file && model && metadata) {
-      try {
-        const imageTensor = await loadImage(file);
-        await predictImage(imageTensor);
-      } catch (error) {
-        console.error("Error during prediction:", error);
-      }
-    }
-  };
+  if (file) {
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
 
-  // Helper: Convert the file into a Tensor.
-  const loadImage = (file) => {
-    return new Promise((resolve, reject) => {
+    if (model && metadata) {
       const img = new Image();
-      const url = URL.createObjectURL(file);
       img.src = url;
-      img.onload = () => {
-        const tensor = tf.browser.fromPixels(img);
+      img.onload = async () => {
+        const tensor = tf.browser.fromPixels(img).resizeBilinear([224, 224]).div(255).expandDims(0);
+        const pred = model.predict(tensor).dataSync();
+        const maxIndex = pred.indexOf(Math.max(...pred));
+        const confidence = pred[maxIndex];
+
+        if (confidence < MIN_CONFIDENCE) {
+          alert("Low confidence. Try another image.");
+          return;
+        }
+
+        const label = metadata.labels[maxIndex];
+        setSelectedType(label);
+        setPredictionResult({ type: label, probability: confidence });
+        setPredictionValid(true);
         URL.revokeObjectURL(url);
-        resolve(tensor);
       };
-      img.onerror = (error) => {
-        URL.revokeObjectURL(url);
-        reject(error);
-      };
-    });
-  };
-
-  // Preprocess the image and run the prediction.
-  const predictImage = async (imageTensor) => {
-    const resizedImage = tf.image.resizeBilinear(imageTensor, [224, 224]);
-    const normalizedImage = resizedImage.div(255.0);
-    const input = normalizedImage.expandDims(0);
-
-    const predictionTensor = model.predict(input);
-    const predictionData = predictionTensor.dataSync();
-    const predictedIndex = predictionData.indexOf(Math.max(...predictionData));
-    const predictedProbability = predictionData[predictedIndex];
-
-    if (metadata && metadata.labels && predictedIndex < metadata.labels.length) {
-      if (predictedProbability < MIN_CONFIDENCE) {
-        setPredictionValid(false);
-        setPredictionResult(null);
-        alert("The model is not confident about this image. Please upload a valid image.");
-        return;
-      }
-
-      const predictedLabel = metadata.labels[predictedIndex];
-      setSelectedType(predictedLabel);
-      setPredictionValid(true);
-      setPredictionResult({
-        type: predictedLabel,
-        probability: predictedProbability,
-      });
-      console.log(predictedLabel, predictedProbability);
-    } else {
-      setPredictionValid(false);
-      setPredictionResult(null);
-      alert("The image could not be identified. Please select a valid image.");
     }
-  };
+  }
+};
 
-  // On form submission, ensure a location and a file are selected, then send the report data to the backend.
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedCoordinates || !selectedFile || !predictionValid) return;
 
-    if (!selectedCoordinates || !selectedFile) {
-      console.error("Please select both a location and a file before submitting");
-      return;
-    }
-
-    if (!predictionValid) {
-      alert("The image could not be identified. Please select a valid image.");
-      return;
-    }
-
+    setIsSubmitting(true);
     const formData = new FormData();
     formData.append("latitude", selectedCoordinates.lat);
     formData.append("longitude", selectedCoordinates.lng);
@@ -225,120 +165,309 @@ export const NewReport = () => {
     formData.append("type", selectedType);
 
     try {
-      const response = await fetch("http://localhost:6969/new", {
+      const res = await fetch("http://localhost:6969/new", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log("Report submitted successfully:", result);
+      if (!res.ok) throw new Error("Failed to submit");
       navigate("/user");
-    } catch (error) {
-      console.error("Error submitting report:", error);
+    } catch (err) {
+      alert("Submission failed.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const username = user?.username || 'Guest';
+  const formatDate = (date) => new Date(date).toLocaleDateString('en-GB');
+
   return (
-    <main className={styles.newReportPage}>
-      <div className={styles.contentWrapper}>
-        <section className={styles.reportSection}>
-          <h1 className={styles.pageTitle}>New Report</h1>
-          <form onSubmit={handleSubmit}>
-            <div className={styles.reportTypeSelector}>
-              <h2 className={styles.sectionTitle}>Type</h2>
-              <label htmlFor="report-type-select" className={styles.visuallyHidden}>
-                Select report type
-              </label>
-              <select
-                id="report-type-select"
-                className={styles.typeSelect}
-                value={selectedType}
-                onChange={handleTypeSelect}
-                aria-describedby="report-type-description"
-              >
-                {metadata && metadata.labels
-                  ? metadata.labels.map((label, idx) => (
-                      <option key={idx} value={label}>
-                        {label}
-                      </option>
-                    ))
-                  : reportTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-              </select>
-              <p id="report-type-description" className={styles.visuallyHidden}>
-                Choose the type of incident you want to report
-              </p>
+    <main className="min-h-screen  flex"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      
+        {/* Sidebar */}
+        <nav className={`${styles.nav} glass`} >
+          <div className={styles.logoContainer}>
+            <h1 className="text-3xl font-bold text-3d">
+              <span className="text-[var(--primary-color)]">Uyir</span>
+              <span className="text-[var(--red-color)]">Safe</span>
+            </h1>
+          </div>
+          <div className={styles.navContent}>
+            <div className={styles.menuSection}>
+              <h2 className={styles.menuHeading}>Menu</h2>
+              <ul className={styles.navList}>
+                <li><NavLink to="/user" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} end><HomeIcon className={styles.navIcon} /><span>Home</span></NavLink></li>
+                <li><NavLink to="/user/new-report" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><PlusCircleIcon className={styles.navIcon} /><span>New Report</span></NavLink></li>
+                <li><NavLink to="/user/previous-reports" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><ArrowPathIcon className={styles.navIcon} /><span>Previous Reports</span></NavLink></li>
+                <li><NavLink to="/user/redeem" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><SparklesIcon className={styles.navIcon} /><span>Redeem Points</span></NavLink></li>
+                <li><NavLink to="/user/profile" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><UserIcon className={styles.navIcon} /><span>User Profile</span></NavLink></li>
+              </ul>
             </div>
-            <div className={styles.locationSelector}>
-              <h2 className={styles.sectionTitle}>Choose Location</h2>
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={mapCenter} // Use the user's current location as the center
-                zoom={10}
-                onClick={handleMapClick}
-              >
-                {selectedCoordinates && <Marker position={selectedCoordinates} />}
-              </GoogleMap>
-              <p id="location-description" className={styles.selectedLocation}>
-                📍 {address || "No location selected"}
-              </p>
+            <div className={styles.otherServices}>
+              <h2 className={styles.menuHeading}>Other Services</h2>
+              <ul className={styles.serviceList}>
+                <li><button className={styles.serviceButton}><Cog8ToothIcon className={styles.serviceIcon} /><span>Points System</span></button></li>
+                <li><button className={styles.serviceButton}><ShieldCheckIcon className={styles.serviceIcon} /><span>Road Safety Quiz</span></button></li>
+                <li><button className={styles.serviceButton}><HandRaisedIcon className={styles.serviceIcon} /><span>Partnership</span></button></li>
+                <li><button className={styles.serviceButton}><ChatBubbleLeftRightIcon className={styles.serviceIcon} /><span>Feedbacks</span></button></li>
+              </ul>
             </div>
-            <div className={styles.fileUploader}>
-              <p className={styles.fileName}>
-                {selectedFile ? `File: ${selectedFile.name}` : "No file selected"}
-              </p>
-              <label htmlFor="file-input" className={styles.chooseFileButton}>
-                Choose File
-              </label>
-              <input
-                type="file"
-                id="file-input"
-                className={styles.hiddenFileInput}
-                onChange={handleFileChange}
-                aria-label="Choose file to upload"
-              />
-              {predictionResult && (
-                <p className={styles.predictionResult}>
-                  Predicted: <strong>{predictionResult.type}</strong> with{" "}
-                  {(predictionResult.probability * 100).toFixed(2)}% confidence.
-                </p>
+          </div>
+        </nav>
+
+        {/* Main Content */}
+              <div className={styles.mainContent}>
+                {/* Welcome Card */}
+                <div className="card glass rounded-lg p-6 mb-6 w-full">
+                  <h2 className="text-2xl font-semibold text-[var(--primary-color)]">Create a new report, {username}</h2>
+                </div>
+
+          {/* FORM AND SIMILAR REPORTS */}
+          <div className="relative flex flex-col lg:flex-row ">
+          {/* Main Report Form */}
+          <div className="flex-1 max-w-4xl">
+            <div className="card glass rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <DocumentTextIcon className="h-6 w-6 text-[var(--primary-color)]" />
+                <h1 className="text-2xl font-bold text-black">New Report</h1>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Report Type Section */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-[var(--primary-color)]" />
+                    <h2 className="text-lg font-semibold text-black">Report Type</h2>
+                  </div>
+                  <select
+                    id="report-type-select"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition-all"
+                    value={selectedType}
+                    onChange={handleTypeSelect}
+                    aria-describedby="report-type-description"
+                  >
+                    {metadata && metadata.labels
+                      ? metadata.labels.map((label, idx) => (
+                          <option key={idx} value={label}>
+                            {label}
+                          </option>
+                        ))
+                      : reportTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                  </select>
+                  {isModelLoading && (
+                    <p className="text-sm text-gray-500 mt-2 flex items-center gap-2">
+                      <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                      Loading AI model for image recognition...
+                    </p>
+                  )}
+                </div>
+
+                {/* Location Section */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <MapPinIcon className="h-5 w-5 text-[var(--primary-color)]" />
+                    <h2 className="text-lg font-semibold text-black">Choose Location</h2>
+                  </div>
+                  <div className="rounded-lg overflow-hidden border border-gray-300">
+                    <GoogleMap
+                      mapContainerStyle={mapContainerStyle}
+                      center={mapCenter}
+                      zoom={10}
+                      onClick={handleMapClick}
+                      options={{
+                        styles: [
+                          {
+                            featureType: "all",
+                            elementType: "geometry.fill",
+                            stylers: [{ saturation: -15 }]
+                          }
+                        ]
+                      }}
+                    >
+                      {selectedCoordinates && <Marker position={selectedCoordinates} />}
+                    </GoogleMap>
+                  </div>
+                  {address && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-800 flex items-center gap-2">
+                        <MapPinIcon className="h-4 w-4" />
+                        <strong>Selected Location:</strong> {address}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* File Upload Section */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <PhotoIcon className="h-5 w-5 text-[var(--primary-color)]" />
+                    <h2 className="text-lg font-semibold text-black">Upload Evidence</h2>
+                  </div>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white bg-opacity-50">
+                    <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <label htmlFor="file-input" className="cursor-pointer">
+                      <span className="text-[var(--primary-color)] font-medium hover:underline">
+                        Choose file to upload
+                      </span>
+                      <p className="text-sm text-gray-500 mt-1">
+                        PNG, JPG, GIF up to 10MB
+                      </p>
+                    </label>
+                    <input
+                      type="file"
+                      id="file-input"
+                      className="hidden"
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      aria-label="Choose file to upload"
+                    />
+                  </div>
+                  
+                  {selectedFile && (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>File:</strong> {selectedFile.name}
+                      </p>
+                    </div>
+                  )}
+
+                  {previewUrl && (
+  <div className="mt-3">
+    <p className="text-sm text-gray-600 mb-2">Image Preview:</p>
+    <img
+      src={previewUrl}
+      alt="Preview"
+      className="rounded-lg border border-gray-300 max-h-64 mx-auto"
+    />
+  </div>
+)}
+
+
+                  {predictionResult && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-green-800">
+                        <CheckCircleIcon className="h-5 w-5" />
+                        <p className="text-sm">
+                          <strong>AI Prediction:</strong> {predictionResult.type} 
+                          <span className="text-green-600">
+                            {' '}({(predictionResult.probability * 100).toFixed(2)}% confidence)
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={!selectedCoordinates || !selectedFile || !predictionValid || isSubmitting}
+                  className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircleIcon className="h-5 w-5" />
+                      Submit Report
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Similar Reports Sidebar */}
+          <div className="lg:w-96 ml-5">
+            <div className="card glass rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <ClockIcon className="h-5 w-5 text-[var(--primary-color)]" />
+                <h2 className="text-lg font-semibold text-black">Similar Reports</h2>
+              </div>
+              
+              {!selectedCoordinates ? (
+                <div className="text-center py-8 text-gray-500">
+                  <MapPinIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Select a location to see similar reports</p>
+                </div>
+              ) : loadingSimilarReports ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-20 bg-gray-200 bg-opacity-50 rounded-lg"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : similarReports.length > 0 ? (
+                <div className="space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
+                  {similarReports.map((report, index) => (
+                    <div key={index} className="bg-white bg-opacity-50 rounded-lg p-4 border border-gray-200">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-medium text-gray-900">{report.type}</h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          report.status === 'Approved' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {report.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{report.location}</p>
+                      <div className="flex justify-between items-center text-xs text-gray-500">
+                        <span>{formatDate(report.date)}</span>
+                        <span>{report.latitude?.toFixed(4)}, {report.longitude?.toFixed(4)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <DocumentTextIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No similar reports found</p>
+                  <p className="text-sm">This area seems clear!</p>
+                </div>
               )}
             </div>
-            <button type="submit" className={styles.submitButton}>
-              Submit
-            </button>
-          </form>
-        </section>
-        <aside className={styles.similarReportsSection}>
-          <h2 className={styles.sectionTitle}>Similar Reports</h2>
-          {similarReports.length > 0 ? (
-            similarReports.map((report, index) => (
-              <div key={index} className={styles.reportCard}>
-                <div className={styles.reportDetails}>
-                  <p className={styles.reportInfo}>Type: {report.type}</p>
-                  <p className={styles.reportInfo}>Location: {report.location}</p>
-                  <p className={styles.reportInfo}>Longitude: {report.longitude}</p>
-                  <p className={styles.reportInfo}>Latitude: {report.latitude}</p>
-                </div>
-                <div className={styles.reportStatus}>
-                  <p className={styles.reportDate}>Date: {report.date}</p>
-                  <div className={styles.statusBadge}>{report.status}</div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p>No similar reports found</p>
-          )}
-        </aside>
+          </div>
+        </div>
       </div>
+      
+
+      {/* Custom Scrollbar Styles */}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(var(--primary-color-rgb), 0.5);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(var(--primary-color-rgb), 0.7);
+        }
+      `}</style>
+        
+      
     </main>
   );
 };
