@@ -238,8 +238,8 @@ export const ReportsPage = () => {
                       key={`report-${report.id || index}`}
                       className="border-t border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 transition-colors"
                     >
-                      <td className="py-4 px-6 text-white">{report.type || `Report #${index + 1}`}</td>
-                      <td className="py-4 px-6 text-white">{formatDate(report.date)}</td>
+                      <td className="py-4 px-6 text-black">{report.type || `Report #${index + 1}`}</td>
+                      <td className="py-4 px-6 text-black">{formatDate(report.date)}</td>
                       <td className="py-4 px-6">
                         <span
                           className={`px-2 py-1 rounded-full text-sm font-semibold ${report.status === 'Resolved'
@@ -250,7 +250,7 @@ export const ReportsPage = () => {
                           {report.status}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-right text-white">{report.points || 0}</td>
+                      <td className="py-4 px-6 text-right text-black">{report.points || 0}</td>
                       <td className="py-4 px-6 text-center">
                         <NavLink
                           to={`/user/report/${report.id || index}`}

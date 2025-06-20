@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
-import { 
-  MapPinIcon, 
-  ClockIcon, 
+import {
+  MapPinIcon,
+  ClockIcon,
   ArrowPathIcon,
   ArrowsPointingOutIcon,
-  ArrowsPointingInIcon 
+  ArrowsPointingInIcon
 } from '@heroicons/react/24/outline';
 import UpdateCard from "./UpdateCard";
 import backgroundImage from '../assets/user-background.png'; // Same background as User component
@@ -66,14 +66,14 @@ export const AdminDashboard = () => {
   }, []);
 
   const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString('en-GB', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(timestamp).toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
   return (
-    <main 
+    <main
       className="min-h-screen"
       style={{
         backgroundImage: `url(${backgroundImage})`,
@@ -98,7 +98,7 @@ export const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 onClick={fetchReports}
                 disabled={isFetching}
                 className="flex items-center gap-2 px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
@@ -119,14 +119,14 @@ export const AdminDashboard = () => {
       <div className="px-6 pb-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Map Section */}
-          <section className="flex-1" aria-label="Map">
+          <section className="flex-none lg:flex-1 w-full lg:w-1/2" aria-label="Map">
             <div className="card glass rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <MapPinIcon className="h-6 w-6 text-[var(--primary-color)]" />
                   <h3 className="text-xl font-semibold text-black">Report Locations</h3>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsMapExpanded(!isMapExpanded)}
                   className="p-2 rounded-full hover:bg-gray-200 hover:bg-opacity-50 transition-colors"
                   aria-label="Toggle Map Size"
@@ -136,11 +136,10 @@ export const AdminDashboard = () => {
                     : <ArrowsPointingOutIcon className="h-5 w-5 text-gray-600" />}
                 </button>
               </div>
-              
-              <div 
-                className={`w-full rounded-lg overflow-hidden ${
-                  isMapExpanded ? 'h-[600px]' : 'h-[400px]'
-                } transition-all duration-300`}
+
+              <div
+                className={`w-full rounded-lg overflow-hidden ${isMapExpanded ? 'h-[600px]' : 'h-[500px]'
+                  } transition-all duration-300`}
               >
                 {!locationLoaded ? (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center rounded-lg">
@@ -173,10 +172,10 @@ export const AdminDashboard = () => {
                     {!isFetching && (
                       <>
                         {/* Blue marker for current location */}
-                        <Marker 
-                          position={mapCenter} 
-                          title="Your Location" 
-                          icon={blueMarkerIcon} 
+                        <Marker
+                          position={mapCenter}
+                          title="Your Location"
+                          icon={blueMarkerIcon}
                         />
 
                         {/* Default markers for reports */}
@@ -192,7 +191,7 @@ export const AdminDashboard = () => {
                   </GoogleMap>
                 )}
               </div>
-              
+
               {/* Map Stats */}
               <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
                 <span>Showing {updates.length} pending reports</span>
@@ -202,36 +201,40 @@ export const AdminDashboard = () => {
           </section>
 
           {/* Updates Section */}
-          <section className="lg:w-96" aria-label="Updates">
-            <div className="card glass rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
+          <section className="flex-none lg:flex-1 w-full lg:w-1/2" aria-label="Updates">
+            <div className="card glass rounded-lg p-6 bg-white bg-opacity-80 backdrop-blur-md">
+              <h3 className="text-xl font-semibold text-[var(--primary-color)] mb-4 flex items-center gap-2">
                 <ClockIcon className="h-6 w-6 text-[var(--primary-color)]" />
                 Pending Reports
               </h3>
-              
+
               {isFetching ? (
                 <div className="space-y-4">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="h-24 bg-gray-200 bg-opacity-50 rounded-lg"></div>
-                    </div>
+                    <div key={i} className="animate-pulse h-24 bg-gray-200 bg-opacity-40 rounded-lg"></div>
                   ))}
                 </div>
               ) : updates.length > 0 ? (
-                <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
+                <div className="space-y-4 max-h-[500px] overflow-x-auto custom-scrollbar">
                   {updates.map((update, index) => (
-                    <UpdateCard key={update.id || index} {...update} />
+                    <div
+                      key={update.id || index}
+                      className="bg-white bg-opacity-50 hover:bg-opacity-70 rounded-lg p-4 transition"
+                    >
+                      <UpdateCard {...update} />
+                    </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <MapPinIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No pending reports</p>
-                  <p className="text-sm">All reports have been processed</p>
+                  <MapPinIcon className="h-12 w-12 mx-auto mb-4 opacity-50 text-[var(--primary-color)]" />
+                  <p className="text-lg font-medium">No pending reports</p>
+                  <p className="text-sm mt-1">All reports have been processed</p>
                 </div>
               )}
             </div>
           </section>
+
         </div>
       </div>
 
