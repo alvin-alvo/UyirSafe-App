@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import styles from '../pages/ReportLayout.module.css';
 
-
 const mapContainerStyle = {
   width: '100%',
   height: '100%',
@@ -13,8 +12,6 @@ const center = {
   lat: 51.5074,
   lng: -0.1278
 };
-
-
 
 export default function LocationSelector() {
 

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from 'react-router-dom';
 import { GoogleMap, Marker } from "@react-google-maps/api";
-import * as tf from "@tensorflow/tfjs";
+// import * as tf from "@tensorflow/tfjs";
 import {
   HomeIcon, PlusCircleIcon, ArrowPathIcon, SparklesIcon, UserIcon,
   Cog8ToothIcon, HandRaisedIcon, ShieldCheckIcon, ChatBubbleLeftRightIcon,
@@ -12,15 +12,16 @@ import {
 import { useAuth } from '../context/AuthContext';
 import backgroundImage from '../assets/user-background.png';
 import styles from '../styles/User.module.css';
+import { Client } from "@gradio/client";
 
 
 // constants
-const reportTypes = ["Car crash", "Pothole", "Fallen tree", "Flood"];
+const reportTypes = ['accident', 'others', 'potholes', 'traffic'];
 const mapContainerStyle = { width: "100%", height: "300px" };
 const defaultCenter = { lat: 11.051362294728685, lng: 76.94148112125961 };
-const MODEL_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/model.json";
-const METADATA_URL = "https://storage.googleapis.com/tm-model/wpaa0No-z/metadata.json";
-const MIN_CONFIDENCE = 1;
+// const MODEL_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/model.json";
+// const METADATA_URL = "https://storage.googleapis.com/tm-model/wpaa0No-z/metadata.json";
+// const MIN_CONFIDENCE = 1;
 
 
 
@@ -33,7 +34,7 @@ export const NewReport = () => {
   const [metadata, setMetadata] = useState(null);
   const [predictionValid, setPredictionValid] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
-  const [isModelLoading, setIsModelLoading] = useState(true);
+  const [isModelLoading, setIsModelLoading] = useState(false);
 
   const [selectedType, setSelectedType] = useState("Car crash");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -47,21 +48,34 @@ export const NewReport = () => {
 
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  // useEffect(() => {
+  //   const loadModel = async () => {
+  //     try {
+  //       setIsModelLoading(true);
+  //       const loadedModel = await tf.loadLayersModel(MODEL_URL);
+  //       setModel(loadedModel);
+  //       const meta = await fetch(METADATA_URL).then(res => res.json());
+  //       setMetadata(meta);
+  //     } catch (err) {
+  //       console.error("Error loading model:", err);
+  //     } finally {
+  //       setIsModelLoading(false);
+  //     }
+  //   };
+  //   loadModel();
+  // }, []);
+
+  // Initialize Gradio client
   useEffect(() => {
-    const loadModel = async () => {
+    async function connect() {
       try {
-        setIsModelLoading(true);
-        const loadedModel = await tf.loadLayersModel(MODEL_URL);
-        setModel(loadedModel);
-        const meta = await fetch(METADATA_URL).then(res => res.json());
-        setMetadata(meta);
+        const api = await Client.connect("http://127.0.0.1:7860");
+        setApp(api);
       } catch (err) {
-        console.error("Error loading model:", err);
-      } finally {
-        setIsModelLoading(false);
+        console.error("Gradio client connect error:", err);
       }
-    };
-    loadModel();
+    }
+    connect();
   }, []);
 
   useEffect(() => {
@@ -121,66 +135,73 @@ export const NewReport = () => {
     fetchAddress(lat, lng);
   };
 
+
+
+  // useEffect(() => {
+  //   Client.connect("http://127.0.0.1:7860").then(setApp);
+  // }, []);
+
+  // // When image selected:
+  // const onFileChange = async (e) => {
+  //   const file = e.target.files[0];
+  //   setSelectedFile(file);
+  //   const blobRef = handle_file(file);
+  //   const result = await app.predict("/predict", { image: blobRef });
+  //   const { label, confidence } = result.data;
+  //   setSelectedType(label);
+  //   setPredictionResult({ type: label, probability: confidence });
+  //   setPredictionValid(true);
+  // };
+
+
   const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    setSelectedFile(file);
+    const file = e.target.files?.[0];
+    if (!file || !app) return;
     setPredictionValid(false);
-    setPredictionResult(null);
-
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-
-      if (model && metadata) {
-        const img = new Image();
-        img.src = url;
-        img.onload = async () => {
-          const tensor = tf.browser.fromPixels(img).resizeBilinear([224, 224]).div(255).expandDims(0);
-          const pred = model.predict(tensor).dataSync();
-          const maxIndex = pred.indexOf(Math.max(...pred));
-          const confidence = pred[maxIndex];
-
-          if (confidence < MIN_CONFIDENCE) {
-            alert("Low confidence. Try another image.");
-            return;
-          }
-
-          const label = metadata.labels[maxIndex];
-          setSelectedType(label);
-          setPredictionResult({ type: label, probability: confidence });
-          setPredictionValid(true);
-          URL.revokeObjectURL(url);
-        };
-      }
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedCoordinates || !selectedFile || !predictionValid) return;
-
-    setIsSubmitting(true);
-    const formData = new FormData();
-    formData.append("latitude", selectedCoordinates.lat);
-    formData.append("longitude", selectedCoordinates.lng);
-    formData.append("location", address);
-    formData.append("file", selectedFile);
-    formData.append("type", selectedType);
-
     try {
-      const res = await fetch("http://localhost:6969/new", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to submit");
-      navigate("/user");
+      const fileRef = handle_file(file);
+      const res = await app.predict("/predict", { img: fileRef });
+      const { label, confidences } = res;
+      const top = confidences?.sort((a, b) => b.confidence - a.confidence)[0];
+      setPredictionResult({ type: top?.label, probability: top?.confidence });
+      setPredictionValid(!!top);
     } catch (err) {
-      alert("Submission failed.");
-    } finally {
-      setIsSubmitting(false);
+      console.error("prediction failed", err);
     }
   };
+
+
+  // const client = await Client.connect("http://127.0.0.1:7860/");
+  // const result = await client.predict("/predict", {
+  //   img: exampleImage,
+  // });
+
+  // console.log(result.data);
+
+  const handleSubmit = async () => {
+    if (!image) return;
+
+    // Convert image to base64
+    const toBase64 = (file) =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+      });
+
+    const base64Image = await toBase64(image);
+
+    // Connect to Gradio client and send image
+    const client = await Client.connect("http://127.0.0.1:7860/");
+
+    const response = await client.predict("/predict", [base64Image]);
+
+    console.log(response.data);
+    setResult(response.data);
+  };
+
+
 
   const username = user?.username || 'Guest';
   const formatDate = (date) => new Date(date).toLocaleDateString('en-GB');
@@ -285,25 +306,25 @@ export const NewReport = () => {
                     <h2 className="text-lg font-semibold text-black">Choose Location</h2>
                   </div>
                   <div className="rounded-lg overflow-hidden border border-gray-300">
-                    
-                      <GoogleMap
-                        mapContainerStyle={mapContainerStyle}
-                        center={mapCenter}
-                        zoom={10}
-                        onClick={handleMapClick}
-                        options={{
-                          styles: [
-                            {
-                              featureType: "all",
-                              elementType: "geometry.fill",
-                              stylers: [{ saturation: -15 }]
-                            }
-                          ]
-                        }}
-                      >
-                        {selectedCoordinates && <Marker position={selectedCoordinates} />}
-                      </GoogleMap>
-                    
+
+                    <GoogleMap
+                      mapContainerStyle={mapContainerStyle}
+                      center={mapCenter}
+                      zoom={10}
+                      onClick={handleMapClick}
+                      options={{
+                        styles: [
+                          {
+                            featureType: "all",
+                            elementType: "geometry.fill",
+                            stylers: [{ saturation: -15 }]
+                          }
+                        ]
+                      }}
+                    >
+                      {selectedCoordinates && <Marker position={selectedCoordinates} />}
+                    </GoogleMap>
+
                   </div>
                   {address && (
                     <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
