@@ -124,39 +124,51 @@ export const NewReport = () => {
     fetchAddress(lat, lng);
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !app) return;
+const handleFileChange = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file || !app) {
+    console.warn("No file selected or Gradio client not initialized");
+    return;
+  }
 
-    setSelectedFile(file);
-    setPredictionValid(false);
-    setPredictionResult(null);
-    const previewUrl = URL.createObjectURL(file);
-    setPreviewUrl(previewUrl);
-    try {
-      const toBase64 = (file) =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-        });
+  setSelectedFile(file);
+  setPredictionValid(false);
+  setPredictionResult(null);
+  setIsModelLoading(true); // Indicate processing start
+  const previewUrl = URL.createObjectURL(file);
+  setPreviewUrl(previewUrl);
 
-      const base64Image = await toBase64(file);
+  try {
+    const response = await app.predict("/predict", [file]);
+    console.log("Gradio API Response:", response); // Log full response for debugging
+    const confidences = response.data?.[0]?.confidences; // Access nested confidences array
 
-      const response = await app.predict("/predict", [base64Image]);
+    if (Array.isArray(confidences) && confidences.length > 0) {
+      // Find the prediction with the highest confidence
+      const top = confidences.reduce((max, curr) =>
+        curr.confidence > max.confidence ? curr : max
+      );
+      console.log("Top prediction:", top); // Log top prediction
 
-      // Extract top prediction
-      const top = response.data?.sort((a, b) => b.confidence - a.confidence)[0];
-      if (top) {
-        setPredictionResult({ type: top.label, probability: top.confidence });
-        setSelectedType(top.label);
-        setPredictionValid(true);
-      }
-    } catch (err) {
-      console.error("Prediction failed:", err);
+      setPredictionResult({
+        type: top.label,
+        probability: top.confidence,
+      });
+      setSelectedType(top.label);
+      setPredictionValid(true);
+    } else {
+      console.warn("Confidences array is empty or invalid:", confidences);
+      setPredictionResult({ type: "unknown", probability: null });
+      setPredictionValid(false);
     }
-  };
+  } catch (err) {
+    console.error("Prediction failed:", err);
+    setPredictionResult({ type: "unknown", probability: null });
+    setPredictionValid(false);
+  } finally {
+    setIsModelLoading(false); // Reset loading state
+  }
+};
 
   const handleSubmit = async () => {
     //send data to backend !!!!
@@ -420,23 +432,22 @@ export const NewReport = () => {
                       />
                     </div>
                   )}
+{predictionResult && (
+  <div className="mt-3">
+    <p className="text-sm">
+      <strong>AI Prediction:</strong> {predictionResult.type}
+      {typeof predictionResult.probability === "number" ? (
+        <span className="text-green-600">
+          ({(predictionResult.probability * 100).toFixed(2)}% confidence)
+        </span>
+      ) : (
+        <span className="text-yellow-500">(confidence not available)</span>
+      )}
+    </p>
+  </div>
+)}
 
-                  {predictionResult && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center gap-2 text-green-800">
-                        <CheckCircleIcon className="h-5 w-5" />
-                        <p className="text-sm">
-                          <strong>AI Prediction:</strong>{" "}
-                          {predictionResult.type}
-                          <span className="text-green-600">
-                            {" "}
-                            ({(predictionResult.probability * 100).toFixed(2)}%
-                            confidence)
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  )}
+
                 </div>
 
                 {/* Submit Button */}
