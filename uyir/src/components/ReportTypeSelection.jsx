@@ -1,37 +1,17 @@
-import React, { useState, useEffect } from "react";
-import * as tmImage from "@teachablemachine/image";
+import React, { useState } from "react";
 import styles from "../pages/ReportLayout.module.css";
+import { Client, handle_file } from "@gradio/client";
 
 const reportTypes = [
-  { id: "carCrash", label: "Car Crash" },
-  { id: "roadHazard", label: "Road Hazard" },
+  { id: "accident", label: "Accident" },
+  { id: "pothole", label: "Pothole" },
   { id: "trafficJam", label: "Traffic Jam" },
-  { id: "construction", label: "Construction" },
 ];
-
-const MODEL_URL =
-  "https://storage.googleapis.com/tm-model/8N2NXMoJ8/model.json";
-const METADATA_URL =
-  "https://storage.googleapis.com/tm-model/8N2NXMoJ8/metadata.json";
 
 export default function ReportTypeSelection() {
   const [selectedType, setSelectedType] = useState("");
-  const [model, setModel] = useState(null);
   const [prediction, setPrediction] = useState(null);
-  const [labelMap, setLabelMap] = useState([]);
-
-  useEffect(() => {
-    const loadModel = async () => {
-      try {
-        const loadedModel = await tmImage.load(MODEL_URL, METADATA_URL);
-        setModel(loadedModel);
-        setLabelMap(loadedModel.getClassLabels());
-      } catch (error) {
-        console.error("Failed to load model:", error);
-      }
-    };
-    loadModel();
-  }, []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileSelect = () => {
     const input = document.createElement("input");
@@ -39,49 +19,49 @@ export default function ReportTypeSelection() {
     input.accept = "image/*";
     input.onchange = async (e) => {
       const file = e.target.files[0];
-      if (file && model) {
-        const img = document.createElement("img");
-        img.src = URL.createObjectURL(file);
-        img.onload = async () => {
-          try {
-            // Get all predictions from the model
-            const predictions = await model.predict(img);
-            console.log("Predictions:", predictions);
+      if (!file) return;
 
-            // Find the prediction with the highest probability
-            const bestMatch = predictions.reduce((a, b) =>
-              a.probability > b.probability ? a : b
-            );
+      setSelectedType("");
+      setPrediction(null);
+      setIsSubmitting(true);
 
-            // Try to match the best prediction to one of our report types.
-            // Converting both to lowercase helps avoid casing issues.
-            const matchedType = reportTypes.find(
-              (type) =>
-                type.label.toLowerCase() === bestMatch.className.toLowerCase()
-            );
+      try {
+        const app = await Client.connect("http://127.0.0.1:7860");
+        const result = await app.predict("/predict", [
+          handle_file(file),
+        ]);
+        // Handle both "label"/"confidence" and "label"/"confidences"
+        const label = result.label || result.data?.label;
+        const confidence = result.confidence ??
+          result.data?.confidence ??
+          result.data?.confidences?.[0]?.confidence;
 
-            if (matchedType) {
-              setSelectedType(matchedType.id);
-              setPrediction(bestMatch);
-            } else {
-              // If there's no match, show an alert and clear any previous prediction.
-              alert("The selected image does not match any known report type.");
-              setPrediction(null);
-            }
-          } catch (error) {
-            console.error("Prediction error:", error);
-          } finally {
-            // Clean up the object URL after the image is loaded.
-            URL.revokeObjectURL(img.src);
+        if (label && confidence != null) {
+          const matched = reportTypes.find((t) => t.label.toLowerCase() === label.toLowerCase());
+          if (matched) {
+            setSelectedType(matched.id);
+            setPrediction({
+              className: matched.label,
+              probability: confidence,
+            });
+          } else {
+            alert("Unrecognized label: " + label);
           }
-        };
+        } else {
+          alert("Prediction data missing");
+        }
+      } catch (err) {
+        console.error("Prediction error:", err);
+        alert("Failed to classify image.");
+      } finally {
+        setIsSubmitting(false);
       }
     };
     input.click();
   };
 
   return (
-    <>
+    <div>
       <h2 className={styles.sectionTitle}>Type</h2>
       <div className={styles.optionsContainer}>
         <select
@@ -100,13 +80,12 @@ export default function ReportTypeSelection() {
         <button
           className={styles.actionButton}
           onClick={handleFileSelect}
-          aria-label="Choose file to upload"
+          disabled={isSubmitting}
         >
-          Choose File
+          {isSubmitting ? "Classifying…" : "Choose File"}
         </button>
       </div>
 
-      {/* Display the prediction result if available */}
       {prediction && (
         <div className={styles.predictionResult}>
           <p>
@@ -115,6 +94,6 @@ export default function ReportTypeSelection() {
           </p>
         </div>
       )}
-    </>
+    </div>
   );
 }

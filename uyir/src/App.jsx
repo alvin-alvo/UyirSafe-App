@@ -10,7 +10,7 @@ import { ReportsPage } from './pages/ReportsPage.jsx';
 import { NewReport } from './pages/NewReport.jsx';
 import { AdminDashboard } from './pages/AdminPage.jsx';
 
-const key = import.meta.env.VITE_Google;
+const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const App = () => {
   return (

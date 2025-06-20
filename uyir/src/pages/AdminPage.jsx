@@ -13,6 +13,7 @@ import backgroundImage from '../assets/user-background.png'; // Same background 
 const libraries = ["places"]; // Keep the libraries static
 
 export const AdminDashboard = () => {
+  // console.log("MAP KEY:", import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
   const [updates, setUpdates] = useState([]);
   const [mapCenter, setMapCenter] = useState(null); // Start with null until location is fetched
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -235,7 +236,7 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Custom Scrollbar Styles */}
-      <style jsx>{`
+      <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
         }
