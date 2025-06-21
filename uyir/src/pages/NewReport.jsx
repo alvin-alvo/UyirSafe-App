@@ -1,26 +1,35 @@
-
 // import statements
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { GoogleMap, Marker } from "@react-google-maps/api";
-import * as tf from "@tensorflow/tfjs";
+// import * as tf from "@tensorflow/tfjs";
 import {
-  HomeIcon, PlusCircleIcon, ArrowPathIcon, SparklesIcon, UserIcon,
-  Cog8ToothIcon, HandRaisedIcon, ShieldCheckIcon, ChatBubbleLeftRightIcon,
-  MapPinIcon, PhotoIcon, DocumentTextIcon, CheckCircleIcon,
-  ExclamationTriangleIcon, ClockIcon, ArrowPathIcon as SpinnerIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../context/AuthContext';
-import backgroundImage from '../assets/user-background.png';
-import styles from '../styles/User.module.css';
+  HomeIcon,
+  PlusCircleIcon,
+  ArrowPathIcon,
+  SparklesIcon,
+  UserIcon,
+  Cog8ToothIcon,
+  HandRaisedIcon,
+  ShieldCheckIcon,
+  ChatBubbleLeftRightIcon,
+  MapPinIcon,
+  PhotoIcon,
+  DocumentTextIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ClockIcon,
+  ArrowPathIcon as SpinnerIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../context/AuthContext";
+import backgroundImage from "../assets/user-background.png";
+import styles from "../styles/User.module.css";
+import { Client } from "@gradio/client";
 
 // constants
-const reportTypes = ["Car crash", "Pothole", "Fallen tree", "Flood"];
+const reportTypes = ["accident", "others", "potholes", "traffic"];
 const mapContainerStyle = { width: "100%", height: "300px" };
 const defaultCenter = { lat: 11.051362294728685, lng: 76.94148112125961 };
-const MODEL_URL = "https://storage.googleapis.com/tm-model/n0ZEc_ZXU/model.json";
-const METADATA_URL = "https://storage.googleapis.com/tm-model/wpaa0No-z/metadata.json";
-const MIN_CONFIDENCE = 1;
 
 // main component
 export const NewReport = () => {
@@ -31,7 +40,7 @@ export const NewReport = () => {
   const [metadata, setMetadata] = useState(null);
   const [predictionValid, setPredictionValid] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
-  const [isModelLoading, setIsModelLoading] = useState(true);
+  const [isModelLoading, setIsModelLoading] = useState(false);
 
   const [selectedType, setSelectedType] = useState("Car crash");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -45,21 +54,17 @@ export const NewReport = () => {
 
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  // Initialize Gradio client
   useEffect(() => {
-    const loadModel = async () => {
+    async function connect() {
       try {
-        setIsModelLoading(true);
-        const loadedModel = await tf.loadLayersModel(MODEL_URL);
-        setModel(loadedModel);
-        const meta = await fetch(METADATA_URL).then(res => res.json());
-        setMetadata(meta);
+        const api = await Client.connect("http://127.0.0.1:7860");
+        setApp(api);
       } catch (err) {
-        console.error("Error loading model:", err);
-      } finally {
-        setIsModelLoading(false);
+        console.error("Gradio client connect error:", err);
       }
-    };
-    loadModel();
+    }
+    connect();
   }, []);
 
   useEffect(() => {
@@ -119,69 +124,58 @@ export const NewReport = () => {
     fetchAddress(lat, lng);
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    setSelectedFile(file);
-    setPredictionValid(false);
-    setPredictionResult(null);
+const handleFileChange = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file || !app) {
+    console.warn("No file selected or Gradio client not initialized");
+    return;
+  }
 
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+  setSelectedFile(file);
+  setPredictionValid(false);
+  setPredictionResult(null);
+  setIsModelLoading(true); // Indicate processing start
+  const previewUrl = URL.createObjectURL(file);
+  setPreviewUrl(previewUrl);
 
-      if (model && metadata) {
-        const img = new Image();
-        img.src = url;
-        img.onload = async () => {
-          const tensor = tf.browser.fromPixels(img).resizeBilinear([224, 224]).div(255).expandDims(0);
-          const pred = model.predict(tensor).dataSync();
-          const maxIndex = pred.indexOf(Math.max(...pred));
-          const confidence = pred[maxIndex];
+  try {
+    const response = await app.predict("/predict", [file]);
+    console.log("Gradio API Response:", response); // Log full response for debugging
+    const confidences = response.data?.[0]?.confidences; // Access nested confidences array
 
-          if (confidence < MIN_CONFIDENCE) {
-            alert("Low confidence. Try another image.");
-            return;
-          }
+    if (Array.isArray(confidences) && confidences.length > 0) {
+      // Find the prediction with the highest confidence
+      const top = confidences.reduce((max, curr) =>
+        curr.confidence > max.confidence ? curr : max
+      );
+      console.log("Top prediction:", top); // Log top prediction
 
-          const label = metadata.labels[maxIndex];
-          setSelectedType(label);
-          setPredictionResult({ type: label, probability: confidence });
-          setPredictionValid(true);
-          URL.revokeObjectURL(url);
-        };
-      }
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedCoordinates || !selectedFile || !predictionValid) return;
-
-    setIsSubmitting(true);
-    const formData = new FormData();
-    formData.append("latitude", selectedCoordinates.lat);
-    formData.append("longitude", selectedCoordinates.lng);
-    formData.append("location", address);
-    formData.append("file", selectedFile);
-    formData.append("type", selectedType);
-
-    try {
-      const res = await fetch("http://localhost:6969/new", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
+      setPredictionResult({
+        type: top.label,
+        probability: top.confidence,
       });
-      if (!res.ok) throw new Error("Failed to submit");
-      navigate("/user");
-    } catch (err) {
-      alert("Submission failed.");
-    } finally {
-      setIsSubmitting(false);
+      setSelectedType(top.label);
+      setPredictionValid(true);
+    } else {
+      console.warn("Confidences array is empty or invalid:", confidences);
+      setPredictionResult({ type: "unknown", probability: null });
+      setPredictionValid(false);
     }
+  } catch (err) {
+    console.error("Prediction failed:", err);
+    setPredictionResult({ type: "unknown", probability: null });
+    setPredictionValid(false);
+  } finally {
+    setIsModelLoading(false); // Reset loading state
+  }
+};
+
+  const handleSubmit = async () => {
+    //send data to backend !!!!
   };
 
-  const username = user?.username || 'Guest';
-  const formatDate = (date) => new Date(date).toLocaleDateString('en-GB');
+  const username = user?.username || "Guest";
+  const formatDate = (date) => new Date(date).toLocaleDateString("en-GB");
 
   return (
     <main
@@ -514,11 +508,16 @@ export const NewReport = () => {
                       className="bg-white bg-opacity-50 rounded-lg p-4 border border-gray-200"
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium text-gray-900">{report.type}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${report.status === 'Approved'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                          }`}>
+                        <h3 className="font-medium text-gray-900">
+                          {report.type}
+                        </h3>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            report.status === "Approved"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
                           {report.status}
                         </span>
                       </div>
