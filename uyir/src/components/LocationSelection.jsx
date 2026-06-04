@@ -14,6 +14,7 @@ const center = {
 };
 
 export default function LocationSelector() {
+
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   const handleMapClick = (event) => {
@@ -26,12 +27,12 @@ export default function LocationSelector() {
   return (
     <>
       <h2 className={styles.locationTitle}>Choose Location</h2>
-      <div 
+      <div
         className={styles.mapContainer}
         role="region"
         aria-label="Map selection area"
       >
-        <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
+        <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
             center={center}
@@ -52,7 +53,10 @@ export default function LocationSelector() {
             )}
           </GoogleMap>
         </LoadScript>
+
       </div>
     </>
+
   );
+
 }

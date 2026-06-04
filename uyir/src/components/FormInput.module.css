@@ -42,6 +42,17 @@
   border-color: rgba(84, 106, 169, 1);
 }
 
+.selectReducedPadding {
+  padding: 0.5rem 1rem;
+}
+
+.verticalDivider {
+  width: 2px;
+  background-color: rgba(200, 200, 200, 0.5);
+  height: 90%;
+  margin: auto 0;
+}
+
 @media (max-width: 768px) {
   .input {
     padding: 1rem;

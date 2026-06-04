@@ -8,6 +8,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/leoantony72/Uyir/handler"
+
 )
 
 func main() {
@@ -44,6 +45,8 @@ func main() {
 	r.POST("/reports/updateStatus", handler.UpdateReportStatus)
 
 	r.POST("/similarReports",handler.SimilarReports)
+
+	r.GET("/me",handler.Me)
 
 	r.Run(":6969")
 }
