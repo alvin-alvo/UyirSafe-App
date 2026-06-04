@@ -3,7 +3,7 @@ version: "3.3"
 services:
   postgres:
     container_name: "uyir_postgres"
-    image: postgres:alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: yourpassword
@@ -12,8 +12,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    logging:
-      driver: "none"
 
 volumes:
   postgres_data:
