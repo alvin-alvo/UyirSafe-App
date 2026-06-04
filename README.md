@@ -86,6 +86,13 @@ Start the PyTorch-powered Gradio image classification server:
 
 ```bash
 cd backend/imageclass
+python -m venv venv
+
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
 pip install torch torchvision gradio pillow
 python gui.py
 ```
