@@ -14,7 +14,7 @@ The system operates on a decoupled client-server architecture with an integrated
 *   **Framework:** React 18 powered by Vite
 *   **Styling:** Tailwind CSS with Heroicons
 *   **Routing:** React Router DOM
-*   **Geospatial Services:** `@react-google-maps/api` for coordinate mapping and reverse geocoding
+*   **Geospatial Services:** `@react-google-maps/api` for coordinate mapping and reverse geocoding, with a seamless fallback to `react-leaflet` and OpenStreetMap's Nominatim API.
 *   **Edge AI Inference:** `@tensorflow/tfjs` and `@teachablemachine/image` for client-side convolutional neural network (CNN) evaluations
 *   **External API Clients:** `@gradio/client` for interfacing with the internal AI microservice
 
@@ -123,7 +123,7 @@ npm run dev
 
 The frontend application will be accessible via `http://localhost:5173`.
 
-**Configuration Note:** The frontend requires a `.env` configuration file within the `uyir` directory to specify the Google Maps API key if strict geocoding features are enforced.
+**Configuration Note:** The frontend requires a `.env` configuration file within the `uyir` directory to specify the Google Maps API key if strict Google geocoding features are desired. If omitted or expired, the application will natively fall back to OpenStreetMap (OSM) for mapping and Nominatim for reverse-geocoding.
 
 ## API Reference
 
