@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { GoogleMap, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker as GoogleMarker } from "@react-google-maps/api";
+import { MapContainer, TileLayer, Marker as LeafletMarker, Popup, CircleMarker } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 import {
   MapPinIcon,
   ClockIcon,
@@ -20,6 +30,7 @@ export const AdminDashboard = () => {
   const [isFetching, setIsFetching] = useState(true); // Track fetch status
   const [locationLoaded, setLocationLoaded] = useState(false); // Track location status
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [mapProvider, setMapProvider] = useState("osm");
   const mapRef = useRef(null);
 
   // Custom blue marker icon for current location
@@ -126,20 +137,38 @@ export const AdminDashboard = () => {
                   <MapPinIcon className="h-6 w-6 text-[var(--primary-color)]" />
                   <h3 className="text-xl font-semibold text-black">Report Locations</h3>
                 </div>
-                <button
-                  onClick={() => setIsMapExpanded(!isMapExpanded)}
-                  className="p-2 rounded-full hover:bg-gray-200 hover:bg-opacity-50 transition-colors"
-                  aria-label="Toggle Map Size"
-                >
-                  {isMapExpanded
-                    ? <ArrowsPointingInIcon className="h-5 w-5 text-gray-600" />
-                    : <ArrowsPointingOutIcon className="h-5 w-5 text-gray-600" />}
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="bg-gray-200 rounded-lg p-1 flex mr-2">
+                    <button
+                      type="button"
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${mapProvider === 'osm' ? 'bg-white shadow text-[var(--primary-color)]' : 'text-gray-500 hover:text-gray-700'}`}
+                      onClick={() => setMapProvider('osm')}
+                    >
+                      OSM
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${mapProvider === 'google' ? 'bg-white shadow text-[var(--primary-color)]' : 'text-gray-500 hover:text-gray-700'}`}
+                      onClick={() => setMapProvider('google')}
+                    >
+                      Google Maps
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setIsMapExpanded(!isMapExpanded)}
+                    className="p-2 rounded-full hover:bg-gray-200 hover:bg-opacity-50 transition-colors"
+                    aria-label="Toggle Map Size"
+                  >
+                    {isMapExpanded
+                      ? <ArrowsPointingInIcon className="h-5 w-5 text-gray-600" />
+                      : <ArrowsPointingOutIcon className="h-5 w-5 text-gray-600" />}
+                  </button>
+                </div>
               </div>
 
               <div
                 className={`w-full rounded-lg overflow-hidden ${isMapExpanded ? 'h-[600px]' : 'h-[500px]'
-                  } transition-all duration-300`}
+                  } transition-all duration-300 relative z-0`}
               >
                 {!locationLoaded ? (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center rounded-lg">
@@ -148,7 +177,7 @@ export const AdminDashboard = () => {
                       <p className="text-gray-600">Loading map...</p>
                     </div>
                   </div>
-                ) : (
+                ) : mapProvider === 'google' ? (
                   <GoogleMap
                     mapContainerStyle={{ width: "100%", height: "100%" }}
                     center={mapCenter}
@@ -172,7 +201,7 @@ export const AdminDashboard = () => {
                     {!isFetching && (
                       <>
                         {/* Blue marker for current location */}
-                        <Marker
+                        <GoogleMarker
                           position={mapCenter}
                           title="Your Location"
                           icon={blueMarkerIcon}
@@ -180,7 +209,7 @@ export const AdminDashboard = () => {
 
                         {/* Default markers for reports */}
                         {updates.map((update) => (
-                          <Marker
+                          <GoogleMarker
                             key={update.id}
                             position={{ lat: update.latitude, lng: update.longitude }}
                             title={`Report ID: ${update.id} - ${update.type || 'Report'}`}
@@ -189,6 +218,28 @@ export const AdminDashboard = () => {
                       </>
                     )}
                   </GoogleMap>
+                ) : (
+                  <MapContainer center={mapCenter} zoom={12} style={{ width: "100%", height: "100%", zIndex: 0 }}>
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {!isFetching && (
+                      <>
+                        <CircleMarker center={mapCenter} pathOptions={{ color: 'blue', fillColor: 'blue', fillOpacity: 0.5 }} radius={8}>
+                          <Popup>Your Location</Popup>
+                        </CircleMarker>
+                        {updates.map((update) => (
+                          <LeafletMarker
+                            key={update.id}
+                            position={{ lat: update.latitude, lng: update.longitude }}
+                          >
+                            <Popup>{`Report ID: ${update.id} - ${update.type || 'Report'}`}</Popup>
+                          </LeafletMarker>
+                        ))}
+                      </>
+                    )}
+                  </MapContainer>
                 )}
               </div>
 
