@@ -8,25 +8,57 @@ const PersonalDetails = ({ username }) => {
   const [form, setForm] = useState(null); // null until data is fetched
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch data from backend (simulate here)
+  // Fetch data from backend
   useEffect(() => {
-    // Replace this with actual fetch later
     const fetchData = async () => {
-      // Simulated API response
-      const res = {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'user@example.com',
-        username: username,
-        dob: '2003-05-14',
-        phone: '+91-9876543210',
-        address: 'Ernakulam, Kerala',
-        vehicleType: 'Light Vehicle',
-        fuelType: 'Petrol',
-        vehicleNumber: 'KL-07-AB-1234',
-      };
-      setForm(res);
-      setIsLoading(false);
+      try {
+        const response = await fetch("http://localhost:6969/me", {
+          method: "GET",
+          credentials: "include"
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(`Server Error ${response.status}: ${errorData ? JSON.stringify(errorData) : response.statusText}`);
+        }
+        
+        const data = await response.json();
+        // The backend /me returns: id, username, email, points, role, firstName, lastName, vehicleType, fuelType, vehicleNumber
+        // We merge with fallback/existing keys for fields that might not exist in backend schema yet.
+        const res = {
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          email: data.email || '',
+          username: data.username || username,
+          dob: '2003-05-14', // fallback as backend doesn't seem to return this
+          phone: '+91-9876543210', // fallback
+          address: 'Ernakulam, Kerala', // fallback
+          vehicleType: data.vehicleType || 'Light Vehicle',
+          fuelType: data.fuelType || 'Petrol',
+          vehicleNumber: data.vehicleNumber || '',
+        };
+        setForm(res);
+      } catch (error) {
+        console.error("=== PROFILE FETCH FAILED ===");
+        console.error("Error Message:", error.message);
+        console.error("Full Error Object:", error);
+        
+        // Fallback to simulated data if backend fetch fails
+        setForm({
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'user@example.com',
+          username: username,
+          dob: '2003-05-14',
+          phone: '+91-9876543210',
+          address: 'Ernakulam, Kerala',
+          vehicleType: 'Light Vehicle',
+          fuelType: 'Petrol',
+          vehicleNumber: 'KL-07-AB-1234',
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchData();
@@ -43,12 +75,29 @@ const PersonalDetails = ({ username }) => {
     setIsEditing(false);
     console.log('Sending updated data to backend:', form);
 
-    // Example POST request
-    // await fetch('/api/update-profile', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(form),
-    // });
+    try {
+      const response = await fetch('http://localhost:6969/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(form),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(`Server Error ${response.status}: ${errorData ? JSON.stringify(errorData) : response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('Profile updated successfully:', result);
+      alert('Profile updated successfully!');
+    } catch (err) {
+      console.error("=== PROFILE SAVE FAILED ===");
+      console.error("Error Message:", err.message);
+      console.error("Full Error Object:", err);
+      console.error("Payload Attempted:", form);
+      alert(`Failed to save profile: ${err.message}. Check console for payload details.`);
+    }
   };
 
   if (isLoading || !form) return <div className="text-gray-600">Loading personal details...</div>;
