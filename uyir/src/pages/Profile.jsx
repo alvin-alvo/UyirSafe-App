@@ -1,153 +1,121 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, Navigate } from 'react-router-dom';
-import {
-  HomeIcon,
-  PlusCircleIcon,
-  ArrowPathIcon,
-  SparklesIcon,
-  UserIcon,
-  Cog8ToothIcon,
-  HandRaisedIcon,
-  ShieldCheckIcon,
-  ChatBubbleLeftRightIcon,
-} from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { User as UserIcon, Phone, Globe, ShieldCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import styles from '../styles/User.module.css';
-import backgroundImage from '../assets/user-background.png';
-import PersonalDetails from '../components/PersonalDetails';
+import { ListTile } from '../components/ListTile';
+import { BottomSheetSelector } from '../components/BottomSheetSelector';
+import { useTranslation } from 'react-i18next'; // Ensure this matches user's locale library if installed
 
-const Profile = () => {
+export const Profile = () => {
   const { user, loading, logout } = useAuth();
+  const { t, i18n } = useTranslation();
+  
+  const [isLangSheetOpen, setIsLangSheetOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState(i18n.language || 'en');
 
   if (!loading && !user) {
     return <Navigate to="/login" />;
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse w-12 h-12 bg-gray-200 rounded-full" />
+      </div>
+    );
   }
 
-  const username = user.username || 'Guest';
+  const username = user?.username || 'Guest';
 
   const handleLogout = async () => {
     await logout();
     window.location.href = '/login';
   };
 
-  const [profileImg, setProfileImg] = useState('/default-profile.jpg'); // path to default pfp
-
-  const handleProfileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => setProfileImg(reader.result);
-      reader.readAsDataURL(file);
-    }
+  const handleLanguageChange = (lang) => {
+    setCurrentLang(lang);
+    i18n.changeLanguage(lang);
   };
 
-
   return (
-    <main
-      className="min-h-screen flex p-4"
-      style={{
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed'
-      }}
-    >
-      {/* Sidebar */}
-      <nav className={`${styles.nav} glass`}>
-        <div className={styles.logoContainer}>
-          <h1 className="text-3xl font-bold text-3d">
-            <span className="text-[var(--primary-color)]">Uyir</span>
-            <span className="text-[var(--red-color)]">Safe</span>
-          </h1>
-        </div>
-        <div className={styles.navContent}>
-          <div className={styles.menuSection}>
-          <h2 className={styles.menuHeading}>Menu</h2>
-          <ul className={styles.navList}>
-            <li><NavLink to="/user" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} end><HomeIcon className={styles.navIcon} /><span>Home</span></NavLink></li>
-            <li><NavLink to="/user/new-report" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><PlusCircleIcon className={styles.navIcon} /><span>New Report</span></NavLink></li>
-            <li><NavLink to="/user/previous-reports" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><ArrowPathIcon className={styles.navIcon} /><span>Previous Report</span></NavLink></li>
-            <li><NavLink to="/user/redeem" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><SparklesIcon className={styles.navIcon} /><span>Redeem Points</span></NavLink></li>
-            <li><NavLink to="/user/profile" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><UserIcon className={styles.navIcon} /><span>User Profile</span></NavLink></li>
-          </ul>
+    <div className="flex flex-col min-h-full bg-gray-50 pb-20 animate-in fade-in duration-300">
+      {/* Native-style header without heavy background images */}
+      <div className="pt-12 pb-6 px-6 bg-white shadow-sm flex items-center gap-4 border-b border-gray-100">
+         <img src="/default-profile.jpg" alt="Profile" className="w-16 h-16 rounded-full border border-gray-200" />
+         <div>
+           <h1 className="text-2xl font-bold text-gray-900">{username}</h1>
+           <p className="text-sm text-gray-500">{user?.email || 'No email provided'}</p>
+         </div>
+      </div>
+
+      <div className="px-4 mt-6 flex flex-col gap-6">
+        {/* Section: Account */}
+        <section>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Account</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <ListTile 
+              icon={UserIcon} 
+              title="Personal Details" 
+              subtitle="Name, DOB, Gender" 
+              onClick={() => {}} 
+            />
+            <ListTile 
+              icon={Phone} 
+              title="Contact Info" 
+              subtitle="Email & Phone" 
+              onClick={() => {}} 
+            />
           </div>
-          <div className={styles.otherServices}>
-            <h2 className={styles.menuHeading}>Other Services</h2>
-            <ul className={styles.serviceList}>
-              <li><button className={styles.serviceButton}><Cog8ToothIcon className={styles.serviceIcon} /><span>Points System</span></button></li>
-              <li><button className={styles.serviceButton}><ShieldCheckIcon className={styles.serviceIcon} /><span>Road Safety Quiz</span></button></li>
-              <li><button className={styles.serviceButton}><HandRaisedIcon className={styles.serviceIcon} /><span>Partnership</span></button></li>
-              <li><button className={styles.serviceButton}><ChatBubbleLeftRightIcon className={styles.serviceIcon} /><span>Feedbacks</span></button></li>
-            </ul>
+        </section>
+
+        {/* Section: Preferences */}
+        <section>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Preferences</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <ListTile 
+              icon={Globe} 
+              title="Language" 
+              subtitle={currentLang === 'ta' ? 'Tamil' : 'English'} 
+              onClick={() => setIsLangSheetOpen(true)} 
+            />
           </div>
-        </div>
-      </nav>
+        </section>
 
-      <div className={styles.mainContent + " flex-1"}>
-        {/* Header with Profile Photo & Logout */}
-        <div className="card glass rounded-lg p-6 mb-6 flex items-center justify-between relative">
-          {/* Profile & Username Section */}
-          <div className="flex items-center space-x-4">
-            <div className="relative group w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300">
-              <img
-                src={profileImg || '/default-profile.jpg'}
-                alt="Profile"
-                className="object-cover w-full h-full group-hover:blur-sm transition duration-300"
-              />
-              <label
-                htmlFor="profile-upload"
-                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition duration-300 cursor-pointer"
-              >
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-              </label>
-              <input
-                id="profile-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleProfileChange}
-                className="hidden"
-              />
-            </div>
-
-            <div>
-              <h2 className="text-xl font-semibold text-[var(--primary-color)]">{username}</h2>
-            </div>
+        {/* Section: Security */}
+        <section>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Security</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <ListTile 
+              icon={ShieldCheck} 
+              title="Identity Verification" 
+              rightElement={<span className="text-[10px] uppercase font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full border border-green-200 shadow-sm">Verified</span>} 
+            />
           </div>
-
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="bg-[var(--red-color)] text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-          >
-            Logout
-          </button>
-        </div>
-
-
-
-        <div className="grid  gap-6">
-
-          <PersonalDetails username={username} />
-
-
+        </section>
+        
+        {/* Logout */}
+        <div className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden mt-4">
+          <ListTile 
+            icon={LogOut} 
+            title="Log Out" 
+            isDestructive 
+            onClick={handleLogout} 
+          />
         </div>
       </div>
 
-
-    </main>
+      <BottomSheetSelector
+        isOpen={isLangSheetOpen}
+        onClose={() => setIsLangSheetOpen(false)}
+        title="Select Language"
+        options={[
+          { label: 'English', value: 'en' },
+          { label: 'தமிழ்', value: 'ta' }
+        ]}
+        selectedValue={currentLang}
+        onSelect={handleLanguageChange}
+      />
+    </div>
   );
 };
 

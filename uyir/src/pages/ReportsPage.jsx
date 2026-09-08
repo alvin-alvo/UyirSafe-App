@@ -10,15 +10,21 @@ import {
   HandRaisedIcon,
   ShieldCheckIcon,
   ChatBubbleLeftRightIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
+import { ChevronDown } from 'lucide-react';
 import styles from "./ReportsPage.module.css";
 import userStyles from "../styles/User.module.css";
 import backgroundImage from '../assets/user-background.png';
+import { ReportCardSkeleton } from '../components/ReportCardSkeleton';
+import { BottomSheetSelector } from '../components/BottomSheetSelector';
 
 export const ReportsPage = () => {
   const [reports, setReports] = useState([]);
   const [filteredReports, setFilteredReports] = useState([]);
   const [filter, setFilter] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   // Function to get username from cookies
   const getCookie = (name) => {
@@ -38,6 +44,7 @@ export const ReportsPage = () => {
     // Fetch reports from /user
     const fetchReports = async () => {
       try {
+        setLoading(true);
         const response = await fetch("http://localhost:6969/user", {
           method: "GET",
           credentials: "include",
@@ -50,17 +57,19 @@ export const ReportsPage = () => {
         const result = await response.json();
         console.log(result);
 
-        // Sort reports so that pending reports appear first
+        // Sort reports so that pending and needs review reports appear first
         const sortedReports = (result.data || []).sort((a, b) => {
-          if (a.status === "Pending" && b.status !== "Pending") return -1;
-          if (a.status !== "Pending" && b.status === "Pending") return 1;
-          return 0;
+          const aPriority = a.status === "Pending" ? 1 : a.status === "Needs Review" ? 2 : 3;
+          const bPriority = b.status === "Pending" ? 1 : b.status === "Needs Review" ? 2 : 3;
+          return aPriority - bPriority;
         });
 
         setReports(sortedReports);
         setFilteredReports(sortedReports);
       } catch (error) {
         console.error("Error fetching reports:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -92,9 +101,32 @@ export const ReportsPage = () => {
     });
   };
 
+  const renderStatusBadge = (status) => {
+    if (status === 'Resolved') {
+      return (
+        <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-700 shadow-sm inline-flex items-center gap-1">
+          {status}
+        </span>
+      );
+    }
+    if (status === 'Needs Review') {
+      return (
+        <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 shadow-sm inline-flex items-center gap-1.5 w-max">
+          <MagnifyingGlassIcon className="h-4 w-4" />
+          {status}
+        </span>
+      );
+    }
+    return (
+      <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 shadow-sm inline-flex items-center gap-1">
+        {status}
+      </span>
+    );
+  };
+
   return (
     <main
-      className="min-h-screen flex p-4"
+      className="min-h-full flex flex-col p-4 pb-20"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -103,173 +135,86 @@ export const ReportsPage = () => {
         backgroundAttachment: 'fixed'
       }}
     >
-      <nav className={`${userStyles.nav} glass`}>
-        <div className={userStyles.logoContainer}>
-          <h1 className="text-3xl font-bold text-3d">
-            <span className="text-[var(--primary-color)]">Uyir</span>
-            <span className="text-[var(--red-color)]">Safe</span>
-          </h1>
-        </div>
-        <div className={userStyles.navContent}>
-          <div className={styles.menuSection}>
-          <h2 className={userStyles.menuHeading}>Menu</h2>
-          <ul className={userStyles.navList}>
-            <li>
-              <NavLink
-                to="/user"
-                className={({ isActive }) =>
-                  `${userStyles.navItem} ${isActive ? userStyles.active : ''}`
-                }
-                end
-              >
-                <HomeIcon className={userStyles.navIcon} />
-                <span>Home</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/user/new-report"
-                className={({ isActive }) =>
-                  `${userStyles.navItem} ${isActive ? userStyles.active : ''}`
-                }
-              >
-                <PlusCircleIcon className={userStyles.navIcon} />
-                <span>New Report</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/user/previous-reports"
-                className={({ isActive }) =>
-                  `${userStyles.navItem} ${isActive ? userStyles.active : ''}`
-                }
-              >
-                <ArrowPathIcon className={userStyles.navIcon} />
-                <span>Previous Report</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/user/redeem"
-                className={({ isActive }) =>
-                  `${userStyles.navItem} ${isActive ? userStyles.active : ''}`
-                }
-              >
-                <SparklesIcon className={userStyles.navIcon} />
-                <span>Redeem Points</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/user/profile"
-                className={({ isActive }) =>
-                  `${userStyles.navItem} ${isActive ? userStyles.active : ''}`
-                }
-              >
-                <UserIcon className={userStyles.navIcon} />
-                <span>User Profile</span>
-              </NavLink>
-            </li>
-          </ul>
-          </div>
-          <div className={userStyles.otherServices}>
-            <h2 className={userStyles.menuHeading}>Other Services</h2>
-            <ul className={userStyles.serviceList}>
-              <li>
-                <button className={userStyles.serviceButton} onClick={() => console.log('Points System clicked')}>
-                  <Cog8ToothIcon className={userStyles.serviceIcon} />
-                  <span>Points System</span>
-                </button>
-              </li>
-              <li>
-                <button className={userStyles.serviceButton} onClick={() => console.log('Road Safety Quiz clicked')}>
-                  <ShieldCheckIcon className={userStyles.serviceIcon} />
-                  <span>Road Safety Quiz</span>
-                </button>
-              </li>
-              <li>
-                <button className={userStyles.serviceButton} onClick={() => console.log('Partnership clicked')}>
-                  <HandRaisedIcon className={userStyles.serviceIcon} />
-                  <span>Partnership</span>
-                </button>
-              </li>
-              <li>
-                <button className={userStyles.serviceButton} onClick={() => console.log('Feedbacks clicked')}>
-                  <ChatBubbleLeftRightIcon className={userStyles.serviceIcon} />
-                  <span>Feedbacks</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
       <div className={`${userStyles.mainContent} ${styles.container}`}>
         <div className="mt-6 w-full">
-          <div className={styles.filterContainer}>
-            <label htmlFor="filter" className={styles.filterLabel}>
-              Filter by Status:
-            </label>
-            <select
-              id="filter"
-              value={filter}
-              onChange={handleFilterChange}
-              className={`${styles.filterDropdown} glass`}
+          <div className="flex flex-col gap-2 mb-6">
+            <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-1">Filter by Status</span>
+            <button
+              onClick={() => setIsFilterSheetOpen(true)}
+              className="w-full bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center shadow-sm"
             >
-              <option value="All">All</option>
-              <option value="Pending">Pending</option>
-              <option value="Resolved">Resolved</option>
-            </select>
+              <span className="text-gray-900 font-medium">{filter}</span>
+              <span className="text-gray-400 bg-gray-100 p-1 rounded-full"><ChevronDown size={16} /></span>
+            </button>
+            <BottomSheetSelector
+              isOpen={isFilterSheetOpen}
+              onClose={() => setIsFilterSheetOpen(false)}
+              title="Filter by Status"
+              options={[
+                { label: 'All', value: 'All' },
+                { label: 'Pending', value: 'Pending' },
+                { label: 'Needs Review', value: 'Needs Review' },
+                { label: 'Resolved', value: 'Resolved' },
+              ]}
+              selectedValue={filter}
+              onSelect={(val) => handleFilterChange({ target: { value: val }})}
+            />
           </div>
+          
           <div className="glass rounded-lg p-6">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-white bg-opacity-10 text-[var(--primary-color)]">
-                  <th className="py-3 px-6 text-left font-semibold">Report Name</th>
-                  <th className="py-3 px-6 text-left font-semibold">Date</th>
-                  <th className="py-3 px-6 text-left font-semibold">Status</th>
-                  <th className="py-3 px-6 text-right font-semibold">Points</th>
-                  <th className="py-3 px-6 text-center font-semibold">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredReports.length > 0 ? (
-                  filteredReports.map((report, index) => (
-                    <tr
-                      key={`report-${report.id || index}`}
-                      className="border-t border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 transition-colors"
-                    >
-                      <td className="py-4 px-6 text-black">{report.type || `Report #${index + 1}`}</td>
-                      <td className="py-4 px-6 text-black">{formatDate(report.date)}</td>
-                      <td className="py-4 px-6">
-                        <span
-                          className={`px-2 py-1 rounded-full text-sm font-semibold ${report.status === 'Resolved'
-                              ? 'bg-green-500 bg-opacity-20 text-green-400'
-                              : 'bg-yellow-500 bg-opacity-20 text-yellow-400'
-                            }`}
-                        >
-                          {report.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-right text-black">{report.points || 0}</td>
-                      <td className="py-4 px-6 text-center">
-                        <NavLink
-                          to={`/user/report/${report.id || index}`}
-                          className="inline-block px-4 py-2 bg-[var(--red-color)] text-white rounded-full hover:bg-red-700 transition-colors"
-                        >
-                          View
-                        </NavLink>
-                      </td>
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Your Reports</h2>
+            
+            {loading ? (
+              <div className="flex flex-col items-center gap-6 w-full">
+                <ReportCardSkeleton />
+                <ReportCardSkeleton />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse min-w-[500px]">
+                  <thead>
+                    <tr className="bg-white bg-opacity-10 text-[var(--primary-color)]">
+                      <th className="py-3 px-4 text-left font-semibold whitespace-nowrap">Report Name</th>
+                      <th className="py-3 px-4 text-left font-semibold whitespace-nowrap">Date</th>
+                      <th className="py-3 px-4 text-left font-semibold whitespace-nowrap">Status</th>
+                      <th className="py-3 px-4 text-right font-semibold whitespace-nowrap">Points</th>
+                      <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Details</th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="py-4 px-6 text-center text-gray-400">
-                      No reports found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {filteredReports.length > 0 ? (
+                      filteredReports.map((report, index) => (
+                        <tr
+                          key={`report-${report.id || index}`}
+                          className="border-t border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 transition-colors"
+                        >
+                          <td className="py-4 px-4 text-black font-medium whitespace-nowrap">{report.type || `Report #${index + 1}`}</td>
+                          <td className="py-4 px-4 text-gray-700 whitespace-nowrap">{formatDate(report.date)}</td>
+                          <td className="py-4 px-4 whitespace-nowrap">
+                            {renderStatusBadge(report.status)}
+                          </td>
+                          <td className="py-4 px-4 text-right font-semibold text-black whitespace-nowrap">{report.points || 0}</td>
+                          <td className="py-4 px-4 text-center whitespace-nowrap">
+                            <NavLink
+                              to={`/user/report/${report.id || index}`}
+                              className="inline-block px-4 py-2 bg-[var(--red-color)] text-white rounded-full hover:bg-red-700 transition-colors shadow-sm"
+                            >
+                              View
+                            </NavLink>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="py-8 px-4 text-center text-gray-500 font-medium">
+                          No reports found for this status.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>

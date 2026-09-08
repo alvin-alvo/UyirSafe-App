@@ -58,7 +58,7 @@ const User = () => {
 
   return (
     <main
-      className="min-h-screen flex"
+      className="min-h-full flex flex-col pb-20"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -67,83 +67,94 @@ const User = () => {
         backgroundAttachment: 'fixed'
       }}
     >
-      {/* Sidebar */}
-      <nav className={`${styles.nav} glass`}>
-        <div className={styles.logoContainer}>
-          <h1 className="text-3xl font-bold text-3d">
-            <span className="text-[var(--primary-color)]">Uyir</span>
-            <span className="text-[var(--red-color)]">Safe</span>
-          </h1>
-        </div>
-        <div className={styles.navContent}>
-          <div className={styles.menuSection}>
-            <h2 className={styles.menuHeading}>Menu</h2>
-            <ul className={styles.navList}>
-              <li><NavLink to="/user" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} end><HomeIcon className={styles.navIcon} /><span>Home</span></NavLink></li>
-              <li><NavLink to="/user/new-report" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><PlusCircleIcon className={styles.navIcon} /><span>New Report</span></NavLink></li>
-              <li><NavLink to="/user/previous-reports" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><ArrowPathIcon className={styles.navIcon} /><span>Previous Reports</span></NavLink></li>
-              <li><NavLink to="/user/redeem" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><SparklesIcon className={styles.navIcon} /><span>Redeem Points</span></NavLink></li>
-              <li><NavLink to="/user/profile" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}><UserIcon className={styles.navIcon} /><span>User Profile</span></NavLink></li>
-            </ul>
-          </div>
-          <div className={styles.otherServices}>
-            <h2 className={styles.menuHeading}>Other Services</h2>
-            <ul className={styles.serviceList}>
-              <li><button className={styles.serviceButton}><Cog8ToothIcon className={styles.serviceIcon} /><span>Points System</span></button></li>
-              <li><button className={styles.serviceButton}><ShieldCheckIcon className={styles.serviceIcon} /><span>Road Safety Quiz</span></button></li>
-              <li><button className={styles.serviceButton}><HandRaisedIcon className={styles.serviceIcon} /><span>Partnership</span></button></li>
-              <li><button className={styles.serviceButton}><ChatBubbleLeftRightIcon className={styles.serviceIcon} /><span>Feedbacks</span></button></li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
-      <div className={styles.mainContent}>
+      <div className={`${styles.mainContent} flex-1 ml-0 p-4`}>
         {/* Welcome Card */}
-        <div className="card glass rounded-lg p-6 mb-6 w-full">
+        <div className="card glass rounded-xl p-6 mb-6 w-full">
           <h2 className="text-2xl font-semibold text-[var(--primary-color)]">Welcome, {username}</h2>
         </div>
 
-        {/* Layout Container */}
-        <div className="relative flex flex-col lg:flex-row">
-          {/* Left Column: New Report and Latest Reports */}
-          <div className="flex flex-col max-w-[704px] w-full">
-            {/* New Report */}
-            <NavLink to="/user/new-report" className="w-full">
-              <div className="card bg-red-600 rounded-lg p-6 flex items-center gap-4 transition-transform hover:scale-[1.01] hover:bg-red-700 cursor-pointer">
-                <PlusCircleIcon className="h-10 w-10 text-white" />
-                <span className="text-xl font-semibold text-white">New Report</span>
+        {/* Total Points (Moved to Top) */}
+        <div 
+          className="card rounded-xl p-6 mb-6 min-h-[160px] flex flex-col relative shadow-md overflow-hidden w-full"
+          style={{
+            backgroundImage: 'linear-gradient(135deg, rgb(249, 115, 22), rgb(234, 179, 8))'
+          }}
+        >
+          <div className="flex justify-between items-start mb-2 relative z-10">
+            <div className="flex flex-col gap-1">
+              <h3 className="text-lg font-bold text-white shadow-sm">Total Points</h3>
+              <p className="text-sm font-medium text-orange-100">Level</p>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-3xl font-black text-white drop-shadow-md">500</span>
+              <p className="text-sm font-bold text-orange-100 uppercase tracking-wide">Nanban</p>
+              <p className="text-xs font-medium text-orange-200">நன்பன்</p>
+            </div>
+          </div>
+          {/* Car Animation */}
+          <div className="absolute inset-x-0 bottom-2 h-16 opacity-90">
+            <div className="relative w-full h-full">
+              {/* Road */}
+              <div className="absolute bottom-0 w-full h-8 bg-gray-800 rounded-lg overflow-hidden shadow-inner">
+                <div className="absolute top-1/2 w-full h-1 border-t-2 border-dashed border-yellow-400"></div>
               </div>
-            </NavLink>
+              {/* Vehicles */}
+              <span className="absolute bottom-2 text-3xl animate-car drop-shadow-lg">🚗</span>
+              <span className="absolute bottom-2 text-3xl animate-motorcycle drop-shadow-lg" style={{ animationDelay: '1s' }}>🏍</span>
+              <span className="absolute bottom-1 text-3xl animate-truck drop-shadow-lg" style={{ animationDelay: '0.5s' }}>🚛</span>
+            </div>
+          </div>
+          <style>
+            {`
+              @keyframes moveVehicle {
+                0% { transform: translateX(-50px) scaleX(-1); }
+                100% { transform: translateX(400px) scaleX(-1); }
+              }
+              @keyframes moveTruck {
+                0% { transform: translateX(400px); }
+                100% { transform: translateX(-50px); }
+              }
+              .animate-car, .animate-motorcycle {
+                animation: moveVehicle 4s linear infinite;
+              }
+              .animate-truck {
+                animation: moveTruck 4s linear infinite;
+              }
+            `}
+          </style>
+        </div>
 
-            {/* Latest Reports */}
-            <div className="w-full mt-6">
-              <div className="card glass rounded-lg p-6 min-h-[30vh]">
-                <div className={styles.reportsHeader}>
-                  <h3 className="text-lg font-semibold text-black">Latest Reports by You</h3>
-                  <NavLink to="/user/previous-reports" className={styles.seeMoreLink}>See More</NavLink>
-                </div>
-                <table className="w-full text-sm">
+        {/* Layout Container */}
+        <div className="relative flex flex-col gap-6">
+          {/* Latest Reports */}
+          <div className="w-full">
+            <div className="card glass rounded-xl p-6 h-full min-h-[300px]">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Latest Reports by You</h3>
+                <NavLink to="/user/previous-reports" className="text-sm text-blue-600 hover:underline font-medium">See More</NavLink>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
                   <thead>
-                    <tr className="text-[var(--primary-color)] text-left">
-                      <th className="py-2 px-4">Name</th>
-                      <th className="py-2 px-4">Date</th>
-                      <th className="py-2 px-4">Status</th>
+                    <tr className="text-[var(--primary-color)] border-b border-gray-200">
+                      <th className="py-3 px-4 font-semibold">Name</th>
+                      <th className="py-3 px-4 font-semibold">Date</th>
+                      <th className="py-3 px-4 font-semibold">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {latestReports.length > 0 ? (
                       latestReports.map((report, index) => (
-                        <tr key={`report-${report.id || index}`} className="text-black border-t border-white border-opacity-10">
-                          <td className="py-2 px-4">{report.type || 'N/A'}</td>
-                          <td className="py-2 px-4">{formatDate(report.date)}</td>
-                          <td className="py-2">
+                        <tr key={`report-${report.id || index}`} className="text-gray-800 border-b border-gray-100 last:border-0 hover:bg-white/50 transition-colors">
+                          <td className="py-3 px-4 font-medium">{report.type || 'N/A'}</td>
+                          <td className="py-3 px-4 text-gray-600">{formatDate(report.date)}</td>
+                          <td className="py-3 px-4">
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                              className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold ${
                                 report.status
-                                  ? 'bg-green-500 bg-opacity-20 text-green-800'
-                                  : 'bg-yellow-500 bg-opacity-20 text-yellow-800'
+                                  ? 'bg-green-100 text-green-700 border border-green-200'
+                                  : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
                               }`}
                             >
                               {report.status ? 'Approved' : 'Pending'}
@@ -153,86 +164,11 @@ const User = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="3" className="text-center text-gray-400">No reports available</td>
+                        <td colSpan="3" className="py-8 text-center text-gray-500">No reports available</td>
                       </tr>
                     )}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Total Points and Sponsors */}
-          <div className="max-w-[385px] w-full lg:fixed lg:right-6 lg:top-32">
-            {/* Total Points */}
-            <div 
-              className="card glass rounded-lg p-4 min-h-[22vh] flex flex-col relative"
-              style={{
-                backgroundImage: 'linear-gradient(to bottom right, rgb(249, 115, 22), rgb(234, 179, 8))'
-              }}
-            >
-              <div className="flex mb-2">
-                <div className="w-1/2">
-                  <h3 className="text-xl font-semibold text-[var(--primary-color)]">Total Points                               :</h3>
-                  <p className="text-lg font-semibold text-orange-700">Level                                                              :</p>
-                </div>
-                <div className="w-1/2">
-                  <span className="text-xl font-semibold text-[var(--primary-color)] text-right">500</span>
-                  <p className="text-lg font-semibold text-orange-700 text-right">Nanban</p>
-                  <p className="text-lg font-semibold text-gray-700 text-right">நன்பன்</p>
-                </div>
-              </div>
-              {/* Car Animation */}
-              <div className="absolute inset-x-0 bottom-4 h-12">
-                <div className="relative w-full h-full">
-                  {/* Road */}
-                  <div className="absolute bottom-0 w-full h-6 bg-gray-600 rounded">
-                    <div className="absolute top-1/2 w-full h-0.5 border-t-2 border-dashed border-white"></div>
-                  </div>
-                  {/* Vehicles */}
-                  <span className="absolute bottom-2 text-2xl animate-car">🚗</span>
-                  <span className="absolute bottom-2 text-2xl animate-motorcycle" style={{ animationDelay: '1s' }}>🏍</span>
-                  <span className="absolute bottom-0.5 text-2xl animate-truck" style={{ animationDelay: '0.5s' }}>🚛</span>
-                </div>
-              </div>
-              <style>
-                {`
-                  @keyframes moveVehicle {
-                    0% { transform: translateX(0) scaleX(-1); }
-                    100% { transform: translateX(353px) scaleX(-1); }
-                  }
-                  @keyframes moveTruck {
-                    0% { transform: translateX(353px); }
-                    100% { transform: translateX(0); }
-                  }
-                  .animate-car, .animate-motorcycle {
-                    animation: moveVehicle 4s linear infinite;
-                  }
-                  .animate-truck {
-                    animation: moveTruck 4s linear infinite;
-                  }
-                `}
-              </style>
-            </div>
-
-            {/* Sponsors Carousel */}
-            <div className="mt-6">
-              <div className="card glass rounded-lg p-6 h-[calc(57vh-16px)]">
-                <h3 className="text-xl font-semibold text-[var(--primary-color)] mb-4">Supported By:</h3>
-                <div className="relative w-full h-[calc(100%-20px)] overflow-hidden rounded-md">
-                  {sponsorImages.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt={`Sponsor ${index + 1}`}
-                      className={`absolute inset-0 w-full h-full object-cover rounded-xl p-4 -translate-y-4 transition-all duration-[2500ms] ease-in-out ${
-                        index === currentSponsorIndex
-                          ? 'opacity-100 scale-100'
-                          : 'opacity-0 scale-95'
-                      }`}
-                    />
-                  ))}
-                </div>
               </div>
             </div>
           </div>

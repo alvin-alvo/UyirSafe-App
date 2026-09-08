@@ -85,8 +85,6 @@
   flex: 1;
   padding: 1.5rem;
   margin-left: 18rem;
-  overflow-y: auto;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }

@@ -1,0 +1,11 @@
+{
+  "login": {
+    "title": "Login",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Login",
+    "noAccount": "Don't have an account?",
+    "signup": "Sign up",
+    "ekycLogin": "Login with DigiLocker"
+  }
+}
