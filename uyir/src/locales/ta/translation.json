@@ -1,0 +1,11 @@
+{
+  "login": {
+    "title": "உள்நுழைக",
+    "username": "பயனர்பெயர்",
+    "password": "கடவுச்சொல்",
+    "submit": "உள்நுழைக",
+    "noAccount": "கணக்கு இல்லையா?",
+    "signup": "பதிவு செய்க",
+    "ekycLogin": "DigiLocker மூலம் உள்நுழைக"
+  }
+}
