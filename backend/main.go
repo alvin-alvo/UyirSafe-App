@@ -37,6 +37,7 @@ func main() {
 
 	r.GET("/reports", handler.GetAllReports)
 	r.GET("/reports/pending/", handler.GetPendingReports)
+	r.GET("/reports/needs-review/", handler.GetNeedsReviewReports)
 	r.GET("/reports/hospitals", handler.GetReportsForHospitals) // Added route for hospitals
     r.GET("/reports/police", handler.GetReportsForPolice)       // Added route for police
     r.GET("/reports/pwd", handler.GetReportsForPWD)             // Added route for PWD

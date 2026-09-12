@@ -28,9 +28,29 @@ func GetPendingReports(c *gin.Context) {
 	var reports []model.Report
 
 	// find reports where the status is "Pending".
+	// "Needs Review" is intentionally excluded here — it has its own
+	// dedicated route below for the frontend review section.
 	if err := Db.Table("reports").Where("status = ?", "Pending").Find(&reports).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch pending reports: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": reports,
+	})
+}
+
+func GetNeedsReviewReports(c *gin.Context) {
+	var reports []model.Report
+
+	// find reports where the status is "Needs Review".
+	// Separate from /reports/pending/ so the frontend can render
+	// the human-review queue in its own section.
+	if err := Db.Table("reports").Where("status = ?", "Needs Review").Find(&reports).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch reports needing review: " + err.Error(),
 		})
 		return
 	}

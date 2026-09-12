@@ -9,6 +9,17 @@ import json
 # Class labels
 class_names = ['accident', 'others', 'potholes', 'traffic']
 
+# Confidence threshold for human review.
+# Images with top-1 confidence below this are marked "Needs Review"
+# instead of being auto-accepted/rejected. Frontend already renders
+# this status (ReportsPage.jsx) so no frontend change is needed.
+CONFIDENCE_THRESHOLD = 0.70
+
+# Labels treated as "Irrelevant" for the review policy.
+# Current MobileNetV2 checkpoint uses 'others'; a future SigLIP2
+# checkpoint may emit 'Irrelevant' directly — accept both.
+IRRELEVANT_LABELS = {'others', 'irrelevant'}
+
 # Load trained model
 try:
     print("Loading MobileNetV2 model architecture...")
@@ -37,6 +48,34 @@ transform = transforms.Compose([
 ])
 
 # Prediction function
+def get_review_status(label, confidence):
+    """Map (label, confidence) to Accepted / Needs Review / Rejected.
+
+    Policy: confidence < CONFIDENCE_THRESHOLD -> "Needs Review"
+    (even for "Irrelevant"), instead of auto-rejecting.
+    High-confidence irrelevant -> "Rejected", else "Accepted".
+    """
+    try:
+        conf = float(confidence)
+    except (TypeError, ValueError):
+        return "Needs Review"
+    if conf < CONFIDENCE_THRESHOLD:
+        return "Needs Review"
+    if str(label).lower() in IRRELEVANT_LABELS:
+        return "Rejected"
+    return "Accepted"
+
+
+def classify_with_status(img):
+    """Return (probs_dict, top_label, top_confidence, status)."""
+    probs = classify_image(img)
+    if "error" in probs:
+        return probs, "Unknown", 0.0, "Needs Review"
+    top_label = max(probs, key=probs.get)
+    top_conf = float(probs[top_label])
+    return probs, top_label, top_conf, get_review_status(top_label, top_conf)
+
+
 def classify_image(img):
     try:
         # If img is a filepath (string), open it (used in CLI testing)
@@ -69,6 +108,9 @@ if __name__ == "__main__":
         result = classify_image(image_path)
         print("Prediction Result:")
         print(json.dumps(result, indent=2))
+        if "error" not in result:
+            top = max(result, key=result.get)
+            print(f"Top: {top} ({result[top]:.4f}) -> {get_review_status(top, result[top])}")
         print("---------------------------\n")
     else:
         # Launch Gradio server
