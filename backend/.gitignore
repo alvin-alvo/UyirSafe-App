@@ -1,1 +1,4 @@
 /uploads
+# Fine-tuned model weights (~372MB) — keep local, do not commit
+ai_model/best_model.pt
+*.pt
