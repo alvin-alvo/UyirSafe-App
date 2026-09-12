@@ -7,7 +7,6 @@ import { HazardBottomSheet } from "../components/HazardBottomSheet";
 import { HazardSupportFlow } from "../components/HazardSupportFlow";
 import { BottomSheetSelector } from "../components/BottomSheetSelector";
 import { ChevronDown } from "lucide-react";
-import { Client } from "@gradio/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPinIcon, PhotoIcon, ExclamationTriangleIcon,
@@ -35,7 +34,9 @@ function LocationMarker({ position, setPosition, fetchAddress }) {
 }
 
 const defaultCenter = { lat: 11.051362294728685, lng: 76.94148112125961 };
-const reportTypes = ["accident", "others", "potholes", "traffic"];
+// Canonical hazard classes — must match backend/ai_model/classes.json
+// and the `type` values stored by POST /new.
+const reportTypes = ["accident", "irrelevant", "pothole", "traffic"];
 
 // Mock Hazards
 const mockHazards = [
@@ -46,7 +47,6 @@ const mockHazards = [
 export const NewReport = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [app, setApp] = useState(null);
 
   // Step 1 States
   const [mapCenter, setMapCenter] = useState(defaultCenter);
@@ -62,26 +62,17 @@ export const NewReport = () => {
   const [predictionResult, setPredictionResult] = useState(null);
 
   // Step 3 States
-  const [selectedType, setSelectedType] = useState("Car crash");
+  const [selectedType, setSelectedType] = useState("");
   const [isTypeSheetOpen, setIsTypeSheetOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // Gamification State
   const [quotaRemaining, setQuotaRemaining] = useState(4); // Mock quota
 
   // Initialization
   useEffect(() => {
-    async function connect() {
-      try {
-        const api = await Client.connect("http://127.0.0.1:7860");
-        setApp(api);
-      } catch (err) {
-        console.error("Gradio connect error:", err);
-      }
-    }
-    connect();
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -138,15 +129,21 @@ export const NewReport = () => {
     // Auto-proceed to step 3 after selection, while predicting in background
     setStep(3);
 
-    if (!app) return;
+    // Classify via the Go backend (SigLIP2 service behind /api/ai/detect).
+    // Response: {hazardType, confidence (0-1), status, needs_review, ...}
     setIsModelLoading(true);
     try {
-      const response = await app.predict("/classify_image", [file]);
-      const confidences = response.data?.[0]?.confidences;
-      if (Array.isArray(confidences) && confidences.length > 0) {
-        const top = confidences.reduce((max, curr) => curr.confidence > max.confidence ? curr : max);
-        setPredictionResult({ type: top.label, probability: top.confidence });
-        setSelectedType(top.label);
+      const formData = new FormData();
+      formData.append("image", file);
+      const response = await fetch("http://localhost:6969/api/ai/detect", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) throw new Error("AI classification failed");
+      const data = await response.json();
+      if (data.hazardType) {
+        setPredictionResult({ type: data.hazardType, probability: data.confidence });
+        setSelectedType(data.hazardType);
       }
     } catch (err) {
       console.error(err);
@@ -155,19 +152,24 @@ export const NewReport = () => {
     }
   };
 
-  // Step 3 Logic
+  // Step 3 Logic — real submission to POST /new.
+  // Backend expects multipart fields: latitude, longitude, location,
+  // type (canonical: accident/irrelevant/pothole/traffic), file,
+  // plus the session_token cookie (credentials: "include").
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
+
+    if (!selectedFile) {
+      setSubmitError("Please attach a photo of the hazard first.");
+      return;
+    }
+    if (!selectedType) {
+      setSubmitError("Please select a hazard type.");
+      return;
+    }
+
     setIsSubmitting(true);
-    
-    // Mock Submission
-    setTimeout(() => {
-        setIsSubmitting(false);
-        setStep(4);
-    }, 1500);
-    
-    // UNCOMMENT FOR REAL BACKEND
-    /*
     const formData = new FormData();
     formData.append("latitude", selectedCoordinates.lat.toString());
     formData.append("longitude", selectedCoordinates.lng.toString());
@@ -175,12 +177,27 @@ export const NewReport = () => {
     formData.append("type", selectedType);
     formData.append("file", selectedFile);
     try {
-      await fetch("http://localhost:6969/new", { method: "POST", credentials: "include", body: formData });
+      const response = await fetch("http://localhost:6969/new", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (response.status === 401 || response.status === 400) {
+        setSubmitError("Session expired. Please log in again.");
+        setTimeout(() => navigate('/login'), 1500);
+        return;
+      }
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.error || "Failed to submit report");
+      }
       setStep(4);
     } catch (err) {
-      alert("Failed");
-    } finally { setIsSubmitting(false); }
-    */
+      console.error(err);
+      setSubmitError(err.message || "Failed to submit report. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const slideVariants = {
@@ -373,7 +390,7 @@ export const NewReport = () => {
                       onClick={() => setIsTypeSheetOpen(true)}
                       className="w-full bg-white border border-gray-200 rounded-2xl p-4 flex justify-between items-center shadow-sm text-left"
                     >
-                      <span className="text-gray-900 font-semibold">{selectedType}</span>
+                      <span className="text-gray-900 font-semibold">{selectedType || "Select hazard type"}</span>
                       <ChevronDown size={18} className="text-gray-400" />
                     </button>
                   </div>
@@ -390,6 +407,9 @@ export const NewReport = () => {
                 </div>
 
                 <div className="pt-6 mt-auto">
+                  {submitError && (
+                    <p className="mb-3 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{submitError}</p>
+                  )}
                   <button
                     type="submit"
                     disabled={isSubmitting}

@@ -5,7 +5,7 @@ const UpdateCard = ({ id, type, location, longitude, latitude, date, status, onS
   const [localStatus, setLocalStatus] = useState(status); // Local state to track status change
 
   const handleClick = async () => {
-    if (localStatus !== "Pending") return; // Prevent unnecessary calls
+    if (localStatus !== "Pending" && localStatus !== "Needs Review") return; // Prevent unnecessary calls
 
     try {
       const response = await fetch("http://localhost:6969/reports/updateStatus", {
@@ -47,7 +47,7 @@ const UpdateCard = ({ id, type, location, longitude, latitude, date, status, onS
       <div className={styles.updateStatus}>
         <div className={styles.date}>Date: {date}</div>
         <div className={statusClassName}>{localStatus}</div>
-        {localStatus === "Pending" && (
+        {localStatus !== "Resolved" && (
           <button onClick={handleClick} className={buttonClassName}>
             Mark as Resolved
           </button>
