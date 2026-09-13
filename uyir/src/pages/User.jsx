@@ -15,6 +15,7 @@ import sponsor3 from '../assets/sponsor3.jpeg';
 const User = () => {
   const { user, loading } = useAuth();
   const [latestReports, setLatestReports] = useState([]);
+  const [fetchError, setFetchError] = useState("");
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [currentSponsorIndex, setCurrentSponsorIndex] = useState(0);
 
@@ -27,13 +28,17 @@ const User = () => {
           method: 'GET',
           credentials: 'include',
         });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch reports (${response.status})`);
+        }
         const result = await response.json();
-        const sortedReports = (result.data || [])
+        const sortedReports = [...(result.data || [])]
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 5);
         setLatestReports(sortedReports);
       } catch (error) {
         console.error('Error fetching reports:', error);
+        setFetchError('Could not load your reports. Please try again.');
       }
     };
     fetchReports();
@@ -49,6 +54,28 @@ const User = () => {
   const formatDate = (date) => {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('en-GB');
+  };
+
+  const renderStatusBadge = (status) => {
+    if (status === 'Resolved') {
+      return (
+        <span className="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-green-100 text-green-700 border border-green-200">
+          Resolved
+        </span>
+      );
+    }
+    if (status === 'Needs Review') {
+      return (
+        <span className="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">
+          Needs Review
+        </span>
+      );
+    }
+    return (
+      <span className="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+        {status || 'Pending'}
+      </span>
+    );
   };
 
   if (!loading && !user) return <Navigate to="/login" />;
@@ -144,21 +171,17 @@ const User = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {latestReports.length > 0 ? (
+                    {fetchError ? (
+                      <tr>
+                        <td colSpan="3" className="py-8 text-center text-red-500">{fetchError}</td>
+                      </tr>
+                    ) : latestReports.length > 0 ? (
                       latestReports.map((report, index) => (
                         <tr key={`report-${report.id || index}`} className="text-gray-800 border-b border-gray-100 last:border-0 hover:bg-white/50 transition-colors">
                           <td className="py-3 px-4 font-medium">{report.type || 'N/A'}</td>
                           <td className="py-3 px-4 text-gray-600">{formatDate(report.date)}</td>
                           <td className="py-3 px-4">
-                            <span
-                              className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold ${
-                                report.status
-                                  ? 'bg-green-100 text-green-700 border border-green-200'
-                                  : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
-                              }`}
-                            >
-                              {report.status ? 'Approved' : 'Pending'}
-                            </span>
+                            {renderStatusBadge(report.status)}
                           </td>
                         </tr>
                       ))

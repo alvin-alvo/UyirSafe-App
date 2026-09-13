@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-06-14 12:00:22",
+  "model_id": "google/siglip2-base-patch16-256",
+  "classes": [
+    "accident",
+    "irrelevant",
+    "pothole",
+    "traffic"
+  ],
+  "n_folds": 3,
+  "epochs_max": 8,
+  "batch_size": 16,
+  "lr": 2e-05,
+  "img_size": 256,
+  "early_stop_patience": 2,
+  "use_weighted_sampler": true,
+  "use_weighted_loss": false,
+  "phash_threshold": 8,
+  "duplicates_removed": 0,
+  "total_images": 2070,
+  "fold_accuracies": [
+    97.9914,
+    97.5577,
+    97.327
+  ],
+  "fold_best_epochs": [
+    7,
+    8,
+    7
+  ],
+  "cv_mean_acc": 97.6254,
+  "cv_std_acc": 0.2754,
+  "fold": 1,
+  "val_accuracy": 97.9914,
+  "best_epoch": 7
+}

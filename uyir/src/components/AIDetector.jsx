@@ -16,7 +16,7 @@ const AIDetector = () => {
         formData.append("image", image);
 
         try {
-            const res = await axios.post("http://localhost:8080/api/ai/detect", formData);
+            const res = await axios.post("http://localhost:6969/api/ai/detect", formData);
             setResult(res.data);
         } catch (error) {
             console.error("Error:", error);
@@ -34,6 +34,9 @@ const AIDetector = () => {
                     <h2>Result:</h2>
                     <p>Hazard Type: {result.hazardType}</p>
                     <p>Confidence: {(result.confidence * 100).toFixed(2)}%</p>
+                    {result.status && <p>Status: {result.status}</p>}
+                    {result.department && <p>Department: {result.department}</p>}
+                    {result.action && <p>Action: {result.action}</p>}
                 </div>
             )}
         </div>

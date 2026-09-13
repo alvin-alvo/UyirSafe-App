@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
 import {
   HomeIcon,
   PlusCircleIcon,
@@ -24,31 +23,29 @@ export const ReportsPage = () => {
   const [filteredReports, setFilteredReports] = useState([]);
   const [filter, setFilter] = useState("All");
   const [loading, setLoading] = useState(true);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [fetchError, setFetchError] = useState("");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
-  // Function to get username from cookies
-  const getCookie = (name) => {
-    const match = document.cookie.match(
-      new RegExp("(^| )" + name + "=([^;]+)")
-    );
-    return match ? decodeURIComponent(match[2]) : null;
-  };
-
   useEffect(() => {
-    const storedUserName = getCookie("user_name");
-    if (!storedUserName) {
-      window.location.href = "/login";
-      return;
-    }
-
-    // Fetch reports from /user
+    // Fetch the signed-in user's reports from /user.
+    // Auth is the session_token cookie (sent via credentials: "include").
+    // A 401/400 means the session is missing or expired -> back to login.
+    // (No document.cookie check: the user_name cookie can be absent while
+    // the session is still valid, and vice versa.)
     const fetchReports = async () => {
       try {
         setLoading(true);
+        setFetchError("");
         const response = await fetch("http://localhost:6969/user", {
           method: "GET",
           credentials: "include",
         });
+
+        if (response.status === 401 || response.status === 400) {
+          window.location.href = "/login";
+          return;
+        }
 
         if (!response.ok) {
           throw new Error("Failed to fetch reports");
@@ -57,8 +54,12 @@ export const ReportsPage = () => {
         const result = await response.json();
         console.log(result);
 
+        // /user returns { points (user total), data (user's reports) }.
+        // Points are per-user, not per-report, so they feed the header.
+        setTotalPoints(result.points || 0);
+
         // Sort reports so that pending and needs review reports appear first
-        const sortedReports = (result.data || []).sort((a, b) => {
+        const sortedReports = [...(result.data || [])].sort((a, b) => {
           const aPriority = a.status === "Pending" ? 1 : a.status === "Needs Review" ? 2 : 3;
           const bPriority = b.status === "Pending" ? 1 : b.status === "Needs Review" ? 2 : 3;
           return aPriority - bPriority;
@@ -68,6 +69,7 @@ export const ReportsPage = () => {
         setFilteredReports(sortedReports);
       } catch (error) {
         console.error("Error fetching reports:", error);
+        setFetchError("Could not load your reports. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -162,9 +164,16 @@ export const ReportsPage = () => {
           </div>
           
           <div className="glass rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Your Reports</h2>
-            
-            {loading ? (
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Your Reports</h2>
+              <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 shadow-sm">
+                Total Points: {totalPoints}
+              </span>
+            </div>
+
+            {fetchError ? (
+              <p className="py-8 px-4 text-center text-red-500 font-medium">{fetchError}</p>
+            ) : loading ? (
               <div className="flex flex-col items-center gap-6 w-full">
                 <ReportCardSkeleton />
                 <ReportCardSkeleton />
@@ -177,8 +186,6 @@ export const ReportsPage = () => {
                       <th className="py-3 px-4 text-left font-semibold whitespace-nowrap">Report Name</th>
                       <th className="py-3 px-4 text-left font-semibold whitespace-nowrap">Date</th>
                       <th className="py-3 px-4 text-left font-semibold whitespace-nowrap">Status</th>
-                      <th className="py-3 px-4 text-right font-semibold whitespace-nowrap">Points</th>
-                      <th className="py-3 px-4 text-center font-semibold whitespace-nowrap">Details</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -193,20 +200,11 @@ export const ReportsPage = () => {
                           <td className="py-4 px-4 whitespace-nowrap">
                             {renderStatusBadge(report.status)}
                           </td>
-                          <td className="py-4 px-4 text-right font-semibold text-black whitespace-nowrap">{report.points || 0}</td>
-                          <td className="py-4 px-4 text-center whitespace-nowrap">
-                            <NavLink
-                              to={`/user/report/${report.id || index}`}
-                              className="inline-block px-4 py-2 bg-[var(--red-color)] text-white rounded-full hover:bg-red-700 transition-colors shadow-sm"
-                            >
-                              View
-                            </NavLink>
-                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="py-8 px-4 text-center text-gray-500 font-medium">
+                        <td colSpan="3" className="py-8 px-4 text-center text-gray-500 font-medium">
                           No reports found for this status.
                         </td>
                       </tr>

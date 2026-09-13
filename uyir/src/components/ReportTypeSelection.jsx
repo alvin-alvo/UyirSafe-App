@@ -1,37 +1,51 @@
-import React, { useState, useEffect } from "react";
-import * as tmImage from "@teachablemachine/image";
+import React, { useState } from "react";
 import styles from "../pages/ReportLayout.module.css";
 
+// Canonical hazard classes — must match backend/ai_model/classes.json.
 const reportTypes = [
-  { id: "carCrash", label: "Car Crash" },
-  { id: "roadHazard", label: "Road Hazard" },
-  { id: "trafficJam", label: "Traffic Jam" },
-  { id: "construction", label: "Construction" },
+  { id: "accident", label: "Accident" },
+  { id: "irrelevant", label: "Not Relevant" },
+  { id: "pothole", label: "Pothole" },
+  { id: "traffic", label: "Traffic Congestion" },
 ];
-
-const MODEL_URL =
-  "https://storage.googleapis.com/tm-model/8N2NXMoJ8/model.json";
-const METADATA_URL =
-  "https://storage.googleapis.com/tm-model/8N2NXMoJ8/metadata.json";
 
 export default function ReportTypeSelection() {
   const [selectedType, setSelectedType] = useState("");
-  const [model, setModel] = useState(null);
   const [prediction, setPrediction] = useState(null);
-  const [labelMap, setLabelMap] = useState([]);
+  const [isClassifying, setIsClassifying] = useState(false);
 
-  useEffect(() => {
-    const loadModel = async () => {
-      try {
-        const loadedModel = await tmImage.load(MODEL_URL, METADATA_URL);
-        setModel(loadedModel);
-        setLabelMap(loadedModel.getClassLabels());
-      } catch (error) {
-        console.error("Failed to load model:", error);
+  const classifyFile = async (file) => {
+    setIsClassifying(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const response = await fetch("http://localhost:6969/api/ai/detect", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) throw new Error("AI classification failed");
+      const data = await response.json();
+      // Go response: {hazardType, confidence (0-1), status, ...}
+      const bestMatch = {
+        className: data.hazardType,
+        probability: data.confidence,
+        status: data.status,
+      };
+      const matchedType = reportTypes.find(
+        (type) => type.id.toLowerCase() === String(data.hazardType || "").toLowerCase()
+      );
+      if (matchedType) {
+        setSelectedType(matchedType.id);
+        setPrediction(bestMatch);
+      } else {
+        setPrediction(bestMatch);
       }
-    };
-    loadModel();
-  }, []);
+    } catch (error) {
+      console.error("Prediction error:", error);
+    } finally {
+      setIsClassifying(false);
+    }
+  };
 
   const handleFileSelect = () => {
     const input = document.createElement("input");
@@ -39,43 +53,7 @@ export default function ReportTypeSelection() {
     input.accept = "image/*";
     input.onchange = async (e) => {
       const file = e.target.files[0];
-      if (file && model) {
-        const img = document.createElement("img");
-        img.src = URL.createObjectURL(file);
-        img.onload = async () => {
-          try {
-            // Get all predictions from the model
-            const predictions = await model.predict(img);
-            console.log("Predictions:", predictions);
-
-            // Find the prediction with the highest probability
-            const bestMatch = predictions.reduce((a, b) =>
-              a.probability > b.probability ? a : b
-            );
-
-            // Try to match the best prediction to one of our report types.
-            // Converting both to lowercase helps avoid casing issues.
-            const matchedType = reportTypes.find(
-              (type) =>
-                type.label.toLowerCase() === bestMatch.className.toLowerCase()
-            );
-
-            if (matchedType) {
-              setSelectedType(matchedType.id);
-              setPrediction(bestMatch);
-            } else {
-              // If there's no match, show an alert and clear any previous prediction.
-              alert("The selected image does not match any known report type.");
-              setPrediction(null);
-            }
-          } catch (error) {
-            console.error("Prediction error:", error);
-          } finally {
-            // Clean up the object URL after the image is loaded.
-            URL.revokeObjectURL(img.src);
-          }
-        };
-      }
+      if (file) await classifyFile(file);
     };
     input.click();
   };
@@ -101,8 +79,9 @@ export default function ReportTypeSelection() {
           className={styles.actionButton}
           onClick={handleFileSelect}
           aria-label="Choose file to upload"
+          disabled={isClassifying}
         >
-          Choose File
+          {isClassifying ? "Classifying..." : "Choose File"}
         </button>
       </div>
 

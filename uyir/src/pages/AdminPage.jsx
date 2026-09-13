@@ -25,6 +25,8 @@ const libraries = ["places"]; // Keep the libraries static
 export const AdminDashboard = () => {
   // console.log("MAP KEY:", import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
   const [updates, setUpdates] = useState([]);
+  const [reviewUpdates, setReviewUpdates] = useState([]);
+  const [isFetchingReview, setIsFetchingReview] = useState(true);
   const [mapCenter, setMapCenter] = useState(null); // Start with null until location is fetched
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isFetching, setIsFetching] = useState(true); // Track fetch status
@@ -51,6 +53,21 @@ export const AdminDashboard = () => {
     }
   };
 
+  // Fetch reports needing human review from API
+  const fetchReviewReports = async () => {
+    setIsFetchingReview(true);
+    try {
+      const response = await fetch("http://localhost:6969/reports/needs-review/");
+      if (!response.ok) throw new Error("Failed to fetch reports needing review");
+      const jsonData = await response.json();
+      setReviewUpdates(jsonData.data);
+    } catch (error) {
+      console.error("Error fetching reports needing review:", error);
+    } finally {
+      setIsFetchingReview(false);
+    }
+  };
+
   // Get user location on mount
   useEffect(() => {
     if (navigator.geolocation) {
@@ -74,6 +91,7 @@ export const AdminDashboard = () => {
   // Fetch reports when component mounts
   useEffect(() => {
     fetchReports();
+    fetchReviewReports();
   }, []);
 
   const formatTime = (timestamp) => {
@@ -110,8 +128,8 @@ export const AdminDashboard = () => {
             </div>
             <div className="flex items-center gap-4">
               <button
-                onClick={fetchReports}
-                disabled={isFetching}
+                onClick={() => { fetchReports(); fetchReviewReports(); }}
+                disabled={isFetching || isFetchingReview}
                 className="flex items-center gap-2 px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 <ArrowPathIcon className={`h-5 w-5 ${isFetching ? 'animate-spin' : ''}`} />
@@ -120,6 +138,10 @@ export const AdminDashboard = () => {
               <div className="text-right">
                 <p className="text-sm text-gray-600">Pending Reports</p>
                 <p className="text-2xl font-bold text-[var(--primary-color)]">{updates.length}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-600">Needs Review</p>
+                <p className="text-2xl font-bold text-[var(--red-color)]">{reviewUpdates.length}</p>
               </div>
             </div>
           </div>
@@ -286,6 +308,43 @@ export const AdminDashboard = () => {
             </div>
           </section>
 
+        </div>
+
+        {/* Needs Review Section — low-confidence AI classifications */}
+        <div className="mt-6">
+          <section aria-label="Needs Review">
+            <div className="card glass rounded-lg p-6 bg-white bg-opacity-80 backdrop-blur-md">
+              <h3 className="text-xl font-semibold text-[var(--red-color)] mb-4 flex items-center gap-2">
+                <ClockIcon className="h-6 w-6 text-[var(--red-color)]" />
+                Needs Review
+              </h3>
+
+              {isFetchingReview ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="animate-pulse h-24 bg-gray-200 bg-opacity-40 rounded-lg"></div>
+                  ))}
+                </div>
+              ) : reviewUpdates.length > 0 ? (
+                <div className="space-y-4 max-h-[500px] overflow-x-auto custom-scrollbar">
+                  {reviewUpdates.map((update, index) => (
+                    <div
+                      key={update.id || index}
+                      className="bg-white bg-opacity-50 hover:bg-opacity-70 rounded-lg p-4 transition"
+                    >
+                      <UpdateCard {...update} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <MapPinIcon className="h-12 w-12 mx-auto mb-4 opacity-50 text-[var(--red-color)]" />
+                  <p className="text-lg font-medium">No reports need review</p>
+                  <p className="text-sm mt-1">Low-confidence classifications will appear here</p>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
       </div>
 
