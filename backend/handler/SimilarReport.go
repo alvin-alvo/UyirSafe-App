@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leoantony72/Uyir/model"
@@ -13,6 +14,7 @@ import (
 type Input struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
+	Type      string  `json:"type"`
 }
 
 // Haversine formula to calculate distance in meters
@@ -28,7 +30,12 @@ func haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	return R * c
 }
 
-// SimilarReports function
+// SimilarReports implements the Common Reporting Workflow duplicate check.
+//
+// Radius is per issue type per the workflow docs when `type` is supplied:
+// pothole 20m, accident 50m (+ 30-min recent window), traffic 200m.
+// Without a type it falls back to the generic nearby search (500m).
+// Only unresolved issues (Pending / Needs Review) are considered.
 func SimilarReports(c *gin.Context) {
 	var input Input
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -37,31 +44,45 @@ func SimilarReports(c *gin.Context) {
 	}
 
 	// Debug: Print input coordinates
-	fmt.Printf("Input coordinates: Latitude=%f, Longitude=%f\n", input.Latitude, input.Longitude)
+	fmt.Printf("Input coordinates: Latitude=%f, Longitude=%f, Type=%s\n", input.Latitude, input.Longitude, input.Type)
 
-	// Fetch all pending reports from the "reports" table
+	radius := RadiusForType(input.Type)
+	normalized := NormalizeType(input.Type)
+
+	query := Db.Table("reports").Where("status IN ?", []string{"Pending", "Needs Review"})
+	if normalized == TypeAccident || normalized == TypePothole || normalized == TypeTraffic {
+		query = query.Where("type = ?", normalized)
+	}
+
+	// Accident workflow: only recent reports (within 30 min) can be duplicates.
+	if normalized == TypeAccident {
+		cutoff := time.Now().Add(-AccidentTimeWindowMinutes * time.Minute)
+		query = query.Where("date >= ?", cutoff)
+	}
+
+	// Fetch unresolved reports from the "reports" table
 	var reports []model.Report
-	if err := Db.Table("reports").Where("status = ?", "Pending").Find(&reports).Error; err != nil {
+	if err := query.Find(&reports).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Error fetching reports"})
 		return
 	}
 
-	// Debug: Print the number of pending reports found and their coordinates
-	fmt.Printf("Found %d pending reports\n", len(reports))
+	// Debug: Print the number of unresolved reports found and their coordinates
+	fmt.Printf("Found %d unresolved reports\n", len(reports))
 	for _, report := range reports {
 		fmt.Printf("Report ID %s: Latitude=%f, Longitude=%f\n", report.ID, report.Latitude, report.Longitude)
 	}
 
-	// Filter reports within 500 meters (update threshold as needed)
+	// Filter reports within the per-type radius
 	var nearbyReports []model.Report
 	for _, report := range reports {
 		distance := haversine(input.Latitude, input.Longitude, report.Latitude, report.Longitude)
 		fmt.Printf("Distance to report %s: %f meters\n", report.ID, distance)
-		if distance < 500 { // Use 500 for 500 meters threshold
+		if distance < radius {
 			nearbyReports = append(nearbyReports, report)
 		}
 	}
 
-	fmt.Printf("Found %d nearby reports\n", len(nearbyReports))
+	fmt.Printf("Found %d nearby reports (radius %.0fm)\n", len(nearbyReports), radius)
 	c.JSON(http.StatusOK, gin.H{"similar_reports": nearbyReports})
 }

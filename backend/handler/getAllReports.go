@@ -63,8 +63,9 @@ func GetNeedsReviewReports(c *gin.Context) {
 func GetReportsForHospitals(c *gin.Context) {
     var reports []model.Report
 
-    // Find reports where the type is "accidents".
-    if err := Db.Table("reports").Where("type = ?", "acccidents").Find(&reports).Error; err != nil {
+    // Road Accident workflow: immediate forwarding irrespective of support
+    // count — accidents are emergency events. Canonical type "accident".
+    if err := Db.Table("reports").Where("type = ? AND status = ?", TypeAccident, "Pending").Find(&reports).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{
             "error": "Failed to fetch reports for hospitals: " + err.Error(),
         })
@@ -79,8 +80,11 @@ func GetReportsForHospitals(c *gin.Context) {
 func GetReportsForPolice(c *gin.Context) {
     var reports []model.Report
 
-    // Find reports where the type is "accidents" or "traffic jam".
-    if err := Db.Table("reports").Where("type IN (?, ?)", "acccidents", "traffic jam").Find(&reports).Error; err != nil {
+    // Accidents: immediate (no threshold). Traffic: visible once support >= 3.
+    if err := Db.Table("reports").Where(
+        "status = ? AND ((type = ?) OR (type = ? AND support_count >= ?))",
+        "Pending", TypeAccident, TypeTraffic, TrafficVisibleThreshold,
+    ).Find(&reports).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{
             "error": "Failed to fetch reports for police: " + err.Error(),
         })
@@ -95,8 +99,12 @@ func GetReportsForPolice(c *gin.Context) {
 func GetReportsForPWD(c *gin.Context) {
     var reports []model.Report
 
-    // Find reports where the type is "potholes".
-    if err := Db.Table("reports").Where("type = ?", "pothholes").Find(&reports).Error; err != nil {
+    // Pothole workflow: visible on the government dashboard only once the
+    // issue receives support from at least 5 independent users.
+    if err := Db.Table("reports").Where(
+        "type = ? AND status = ? AND support_count >= ?",
+        TypePothole, "Pending", PotholeVisibleThreshold,
+    ).Find(&reports).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{
             "error": "Failed to fetch reports for PWD: " + err.Error(),
         })

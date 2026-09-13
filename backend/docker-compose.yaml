@@ -1,9 +1,7 @@
-version: "3.3"
-
 services:
   postgres:
     container_name: "uyir_postgres"
-    image: postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: yourpassword
@@ -13,5 +11,22 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # Object storage for user-uploaded hazard images (pilot: same VM).
+  # NOTE: uses quay.io (not Docker Hub) because `minio/minio` on Docker Hub
+  # currently denies unauthenticated pulls ("requested access denied").
+  minio:
+    container_name: "uyir_minio"
+    image: quay.io/minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
 volumes:
   postgres_data:
+  minio_data:
