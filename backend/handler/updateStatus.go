@@ -10,8 +10,12 @@ import (
 )
 
 var points = map[string]int{
-	"acccidents": 10,
-	"traffic jam":   2,
+	"accident": 10,
+	"traffic":  2,
+	"pothole":  5,
+	// Legacy variants kept so old rows still award points.
+	"acccidents":  10,
+	"traffic jam": 2,
 	"pothholes":   5,
 }
 
@@ -53,8 +57,12 @@ func UpdateReportStatus(c *gin.Context) {
 		return
 	}
 
-	// Get points from the map, default to 0 if the report type doesn't exist
+	// Get points from the map, default to 0 if the report type doesn't exist.
+	// Normalize so canonical + legacy spellings both award points.
 	pointValue := points[report.Type]
+	if pointValue == 0 {
+		pointValue = points[NormalizeType(report.Type)]
+	}
 	user.Points += pointValue
 
 	if err := Db.Save(&user).Error; err != nil {
